@@ -1,0 +1,1949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyPuzzleInventory — UX Design Directions</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ─── Design Tokens (from Step 8 Visual Foundation) ─── */
+    :root {
+      --bg:             hsl(24, 8%, 8%);
+      --surface:        hsl(24, 6%, 12%);
+      --surface-raised: hsl(24, 5%, 16%);
+      --border:         hsl(24, 5%, 22%);
+      --fg:             hsl(36, 20%, 92%);
+      --fg-muted:       hsl(30, 8%, 55%);
+      --owned:          hsl(38, 85%, 55%);
+      --owned-glow:     hsl(38, 85%, 55%, 0.35);
+      --wanted:         hsl(210, 70%, 60%);
+      --neutral:        hsl(24, 5%, 40%);
+
+      --font-display: 'Fraunces', Georgia, serif;
+      --font-body:    'Inter', system-ui, sans-serif;
+
+      /* Type scale — Major Third (1.250) anchored at 16px */
+      --text-display: 3.052rem;   /* 48.8px */
+      --text-h1:      2.441rem;   /* 39px  */
+      --text-h2:      1.953rem;   /* 31.2px*/
+      --text-h3:      1.563rem;   /* 25px  */
+      --text-h4:      1.25rem;    /* 20px  */
+      --text-body:    1rem;       /* 16px  */
+      --text-sm:      0.8rem;     /* 12.8px */
+      --text-caption: 0.64rem;    /* 10.2px — use with care, 12px hard floor */
+    }
+
+    /* ─── Reset ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ─── Showcase Shell ─── */
+    .showcase-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: hsl(24, 8%, 6%);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .showcase-title {
+      font-family: var(--font-display);
+      font-size: var(--text-h4);
+      font-weight: 400;
+      color: var(--fg);
+      white-space: nowrap;
+    }
+    .showcase-title span {
+      color: var(--owned);
+    }
+    .direction-nav {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .dir-btn {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--fg-muted);
+      font-family: var(--font-body);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .dir-btn:hover {
+      border-color: var(--fg-muted);
+      color: var(--fg);
+    }
+    .dir-btn.active {
+      background: var(--owned);
+      border-color: var(--owned);
+      color: hsl(24, 8%, 8%);
+      font-weight: 600;
+    }
+    .compare-btn {
+      margin-left: auto;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--wanted);
+      background: transparent;
+      color: var(--wanted);
+      font-family: var(--font-body);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .compare-btn:hover, .compare-btn.active {
+      background: var(--wanted);
+      color: white;
+    }
+
+    /* ─── Direction Panel ─── */
+    .direction-panel {
+      display: none;
+      padding: 32px 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .direction-panel.visible {
+      display: block;
+    }
+
+    .dir-intro {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 32px;
+      padding: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    .dir-intro h2 {
+      font-family: var(--font-display);
+      font-size: var(--text-h3);
+      font-weight: 400;
+      color: var(--fg);
+      margin-bottom: 6px;
+    }
+    .dir-intro p {
+      color: var(--fg-muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .dir-intro .dir-traits {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .trait-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+    .trait-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-amber { background: var(--owned); }
+    .dot-blue  { background: var(--wanted); }
+    .dot-muted { background: var(--neutral); }
+
+    .mockup-grid {
+      display: grid;
+      gap: 24px;
+    }
+    .mockup-grid.two-col { grid-template-columns: 1fr 1fr; }
+    .mockup-grid.three-col { grid-template-columns: 1fr 1fr 1fr; }
+
+    .mockup-frame {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .mockup-label {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 14px;
+      font-size: 12px;
+      color: var(--fg-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .mockup-label::before {
+      content: '';
+      display: flex;
+      gap: 4px;
+    }
+    .dots { display: flex; gap: 4px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot-r { background: #FF5F57; }
+    .dot-y { background: #FEBC2E; }
+    .dot-g { background: #28C840; }
+    .mockup-body {
+      background: var(--bg);
+    }
+
+    /* ─── Puzzle Card Components ─── */
+    .puzzle-img {
+      aspect-ratio: 3/4;
+      background: var(--surface-raised);
+      border-radius: 4px;
+      overflow: hidden;
+      position: relative;
+    }
+    .puzzle-img-inner {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: var(--border);
+    }
+    .puzzle-img.img-forest { background: linear-gradient(135deg, hsl(120,15%,18%) 0%, hsl(110,20%,25%) 50%, hsl(115,18%,20%) 100%); }
+    .puzzle-img.img-cafe   { background: linear-gradient(135deg, hsl(35,40%,22%) 0%, hsl(20,35%,28%) 50%, hsl(30,38%,24%) 100%); }
+    .puzzle-img.img-coast  { background: linear-gradient(135deg, hsl(200,30%,20%) 0%, hsl(210,40%,28%) 50%, hsl(195,35%,22%) 100%); }
+    .puzzle-img.img-market { background: linear-gradient(135deg, hsl(15,35%,22%) 0%, hsl(25,45%,30%) 50%, hsl(10,30%,24%) 100%); }
+    .puzzle-img.img-cabin  { background: linear-gradient(135deg, hsl(30,20%,18%) 0%, hsl(40,25%,26%) 50%, hsl(35,22%,20%) 100%); }
+    .puzzle-img.img-bird   { background: linear-gradient(135deg, hsl(180,25%,18%) 0%, hsl(190,30%,26%) 50%, hsl(185,28%,20%) 100%); }
+
+    /* Status badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .badge-owned {
+      background: hsl(38, 85%, 55%, 0.15);
+      color: var(--owned);
+      border: 1px solid hsl(38, 85%, 55%, 0.3);
+    }
+    .badge-wanted {
+      background: hsl(210, 70%, 60%, 0.12);
+      color: var(--wanted);
+      border: 1px solid hsl(210, 70%, 60%, 0.25);
+    }
+    .badge-none {
+      background: transparent;
+      color: var(--fg-muted);
+      border: 1px solid var(--border);
+    }
+
+    /* Ring states */
+    .ring-owned {
+      box-shadow: 0 0 0 2px var(--owned), 0 0 12px 2px var(--owned-glow);
+    }
+    .ring-wanted {
+      box-shadow: 0 0 0 2px var(--wanted), 0 0 8px 1px hsl(210,70%,60%,0.2);
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       DIRECTION 1: THE GALLERY
+       Image-dominant, minimal chrome, browsing joy
+    ───────────────────────────────────────────────────────── */
+    .d1-shell {
+      min-height: 480px;
+      background: var(--bg);
+      position: relative;
+    }
+    .d1-topbar {
+      height: 52px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+    }
+    .d1-logo {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 400;
+      color: var(--fg);
+    }
+    .d1-logo span { color: var(--owned); }
+    .d1-spacer { flex: 1; }
+    .icon-btn {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--fg-muted);
+      font-size: 16px;
+    }
+    .d1-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--owned);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: hsl(24,8%,8%);
+    }
+    .d1-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 3px;
+      padding: 3px;
+    }
+    .d1-card {
+      aspect-ratio: 3/4;
+      background: var(--surface);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    .d1-card:hover { z-index: 2; }
+    .d1-card-img {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+    .d1-card.owned-card { box-shadow: inset 0 0 0 3px var(--owned), inset 0 0 20px var(--owned-glow); }
+    .d1-card.wanted-card { box-shadow: inset 0 0 0 2px var(--wanted); }
+    .d1-card-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 24px 8px 8px;
+      background: linear-gradient(to top, hsl(24,8%,6%) 0%, transparent 100%);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .d1-card:hover .d1-card-overlay { opacity: 1; }
+    .d1-card-title {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--fg);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .d1-card-meta {
+      font-size: 10px;
+      color: var(--fg-muted);
+    }
+    .d1-owned-badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: var(--owned);
+      color: hsl(24,8%,8%);
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+    .d1-bottom-nav {
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      height: 56px;
+    }
+    .d1-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      font-size: 10px;
+      color: var(--fg-muted);
+      cursor: pointer;
+    }
+    .d1-nav-item.active { color: var(--owned); }
+    .d1-nav-icon { font-size: 18px; }
+
+    /* ─────────────────────────────────────────────────────────
+       DIRECTION 2: THE LIBRARY
+       Dense list, rich metadata, efficient
+    ───────────────────────────────────────────────────────── */
+    .d2-shell {
+      min-height: 480px;
+      background: var(--bg);
+    }
+    .d2-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .d2-logo-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .d2-logo {
+      font-family: var(--font-display);
+      font-size: 16px;
+      color: var(--fg);
+    }
+    .d2-logo span { color: var(--owned); }
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+    }
+    .search-icon { color: var(--fg-muted); font-size: 14px; }
+    .search-text { color: var(--fg-muted); font-size: 14px; flex: 1; }
+    .search-kbd {
+      font-size: 11px;
+      color: var(--fg-muted);
+      border: 1px solid var(--border);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .d2-filter-row {
+      display: flex;
+      gap: 6px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+    .filter-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--fg-muted);
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .filter-chip.active {
+      background: hsl(38,85%,55%,0.1);
+      border-color: var(--owned);
+      color: var(--owned);
+    }
+    .d2-list { padding: 0; }
+    .d2-row {
+      display: grid;
+      grid-template-columns: 44px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 16px;
+      border-bottom: 1px solid hsl(24,5%,14%);
+      cursor: pointer;
+    }
+    .d2-row:hover { background: var(--surface); }
+    .d2-thumb {
+      width: 44px;
+      height: 56px;
+      border-radius: 4px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .d2-thumb.owned-thumb { box-shadow: 0 0 0 2px var(--owned); }
+    .d2-thumb.wanted-thumb { box-shadow: 0 0 0 2px var(--wanted); }
+    .d2-info {}
+    .d2-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--fg);
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+    }
+    .d2-meta {
+      font-size: 12px;
+      color: var(--fg-muted);
+    }
+    .d2-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+    }
+    .price-tag {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--fg);
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       DIRECTION 3: THE SHELF
+       Netflix-style horizontal rows by brand
+    ───────────────────────────────────────────────────────── */
+    .d3-shell {
+      min-height: 480px;
+      background: var(--bg);
+    }
+    .d3-hero {
+      height: 160px;
+      background: linear-gradient(135deg, hsl(24,10%,10%) 0%, hsl(30,15%,14%) 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 16px;
+      position: relative;
+    }
+    .d3-hero-label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--owned);
+      margin-bottom: 4px;
+    }
+    .d3-hero-title {
+      font-family: var(--font-display);
+      font-size: var(--text-h3);
+      font-weight: 400;
+      color: var(--fg);
+      margin-bottom: 8px;
+    }
+    .d3-hero-meta {
+      font-size: 12px;
+      color: var(--fg-muted);
+    }
+    .d3-hero-img {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 80px;
+      height: 100px;
+      border-radius: 6px;
+      box-shadow: 0 0 0 2px var(--owned), 0 0 20px var(--owned-glow);
+    }
+    .d3-section { margin-top: 20px; }
+    .d3-section-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      margin-bottom: 10px;
+    }
+    .d3-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--fg);
+    }
+    .d3-see-all {
+      font-size: 12px;
+      color: var(--wanted);
+      cursor: pointer;
+    }
+    .d3-scroll-row {
+      display: flex;
+      gap: 8px;
+      padding: 0 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .d3-scroll-card {
+      flex-shrink: 0;
+      width: 90px;
+    }
+    .d3-scroll-thumb {
+      width: 90px;
+      height: 115px;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 5px;
+      position: relative;
+    }
+    .d3-scroll-thumb.owned-ring { box-shadow: 0 0 0 2px var(--owned), 0 0 10px var(--owned-glow); }
+    .d3-scroll-thumb.wanted-ring { box-shadow: 0 0 0 2px var(--wanted); }
+    .d3-scroll-title {
+      font-size: 11px;
+      color: var(--fg);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .d3-scroll-brand {
+      font-size: 10px;
+      color: var(--fg-muted);
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       DIRECTION 4: THE DASHBOARD
+       Stats-forward, collection pride
+    ───────────────────────────────────────────────────────── */
+    .d4-shell {
+      min-height: 480px;
+      background: var(--bg);
+    }
+    .d4-stats-hero {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 16px;
+    }
+    .d4-greeting {
+      font-size: 13px;
+      color: var(--fg-muted);
+      margin-bottom: 4px;
+    }
+    .d4-headline {
+      font-family: var(--font-display);
+      font-size: var(--text-h3);
+      font-weight: 400;
+      color: var(--fg);
+      margin-bottom: 16px;
+    }
+    .d4-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .d4-stat {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+    .d4-stat-num {
+      font-family: var(--font-display);
+      font-size: var(--text-h2);
+      font-weight: 600;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .d4-stat-num.amber { color: var(--owned); }
+    .d4-stat-num.blue  { color: var(--wanted); }
+    .d4-stat-num.muted { color: var(--fg); }
+    .d4-stat-label {
+      font-size: 11px;
+      color: var(--fg-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .d4-quick-add {
+      margin: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .d4-quick-label {
+      font-size: 12px;
+      color: var(--fg-muted);
+      margin-bottom: 8px;
+    }
+    .d4-activity { margin: 0 16px; }
+    .d4-activity-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--fg-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 10px;
+    }
+    .d4-act-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid hsl(24,5%,14%);
+    }
+    .d4-act-thumb {
+      width: 36px;
+      height: 46px;
+      border-radius: 4px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .d4-act-info { flex: 1; min-width: 0; }
+    .d4-act-title { font-size: 13px; color: var(--fg); }
+    .d4-act-sub { font-size: 12px; color: var(--fg-muted); }
+    .d4-act-badge { flex-shrink: 0; }
+
+    /* ─────────────────────────────────────────────────────────
+       DIRECTION 5: THE FINDER
+       Search is the entire UI
+    ───────────────────────────────────────────────────────── */
+    .d5-shell {
+      min-height: 480px;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+    }
+    .d5-topbar {
+      padding: 20px 16px 0;
+    }
+    .d5-logo {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 400;
+      color: var(--fg);
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .d5-logo span { color: var(--owned); }
+    .d5-search-wrap {
+      position: relative;
+    }
+    .d5-search-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1.5px solid var(--owned);
+      border-radius: 12px;
+      padding: 12px 16px 12px 40px;
+      color: var(--fg);
+      font-family: var(--font-body);
+      font-size: 15px;
+      outline: none;
+      box-shadow: 0 0 0 3px hsl(38,85%,55%,0.12);
+    }
+    .d5-search-icon {
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--owned);
+      font-size: 15px;
+    }
+    .d5-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      color: var(--fg-muted);
+      font-size: 12px;
+    }
+    .divider-line { flex: 1; height: 1px; background: var(--border); }
+    .d5-results {
+      flex: 1;
+      padding: 0 16px 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      align-content: start;
+    }
+    .d5-result-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .d5-result-card.owned-card { border-color: hsl(38,85%,55%,0.5); box-shadow: 0 0 0 1px var(--owned), 0 0 10px var(--owned-glow); }
+    .d5-result-card.wanted-card { border-color: hsl(210,70%,60%,0.4); }
+    .d5-result-img {
+      width: 100%;
+      aspect-ratio: 3/4;
+      max-height: 120px;
+      object-fit: cover;
+    }
+    .d5-result-info {
+      padding: 8px;
+    }
+    .d5-result-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--fg);
+      margin-bottom: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .d5-result-meta {
+      font-size: 11px;
+      color: var(--fg-muted);
+      margin-bottom: 4px;
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       DIRECTION 6: THE COLLECTION
+       My Collection as the primary view
+    ───────────────────────────────────────────────────────── */
+    .d6-shell {
+      min-height: 480px;
+      background: var(--bg);
+    }
+    .d6-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .d6-hdr-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .d6-title {
+      font-family: var(--font-display);
+      font-size: var(--text-h4);
+      font-weight: 400;
+      color: var(--fg);
+    }
+    .d6-subtitle {
+      font-size: 12px;
+      color: var(--fg-muted);
+    }
+    .d6-share-btn {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--fg-muted);
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .d6-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .d6-tab {
+      padding: 10px 16px;
+      font-size: 14px;
+      color: var(--fg-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+    .d6-tab.active {
+      color: var(--fg);
+      border-bottom-color: var(--owned);
+    }
+    .d6-filter-bar {
+      display: flex;
+      gap: 6px;
+      padding: 10px 16px;
+      overflow-x: auto;
+    }
+    .d6-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      padding: 2px;
+    }
+    .d6-cell {
+      aspect-ratio: 3/4;
+      background: var(--surface);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .d6-cell-img {
+      width: 100%;
+      height: 100%;
+    }
+    .d6-cell.owned-cell { box-shadow: inset 0 0 0 2px var(--owned); }
+    .d6-cell.wanted-cell { box-shadow: inset 0 0 0 2px var(--wanted); }
+    .d6-cell-indicator {
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+    }
+    .ind-owned { background: var(--owned); }
+    .ind-wanted { background: var(--wanted); }
+
+    /* ─── Compare Mode ─── */
+    .compare-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: hsl(24,8%,4%, 0.95);
+      z-index: 200;
+      overflow-y: auto;
+    }
+    .compare-overlay.visible { display: block; }
+    .compare-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .compare-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .compare-title {
+      font-family: var(--font-display);
+      font-size: var(--text-h3);
+      color: var(--fg);
+    }
+    .close-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--fg);
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .compare-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .compare-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .compare-card h3 {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 400;
+      margin-bottom: 8px;
+      color: var(--fg);
+    }
+    .compare-card p {
+      font-size: 13px;
+      color: var(--fg-muted);
+      line-height: 1.6;
+    }
+    .compare-best-for {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--owned);
+      font-weight: 500;
+    }
+    .compare-worst-for {
+      margin-top: 4px;
+      font-size: 12px;
+      color: hsl(0,60%,55%);
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 900px) {
+      .mockup-grid.two-col   { grid-template-columns: 1fr; }
+      .mockup-grid.three-col { grid-template-columns: 1fr; }
+      .dir-intro { grid-template-columns: 1fr; }
+      .compare-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .compare-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── Showcase Navigation ─── -->
+<header class="showcase-header">
+  <div class="showcase-title">MyPuzzle<span>Inventory</span> — Design Directions</div>
+  <nav class="direction-nav">
+    <button class="dir-btn active" onclick="showDir(1, this)">1 · The Gallery</button>
+    <button class="dir-btn" onclick="showDir(2, this)">2 · The Library</button>
+    <button class="dir-btn" onclick="showDir(3, this)">3 · The Shelf</button>
+    <button class="dir-btn" onclick="showDir(4, this)">4 · The Dashboard</button>
+    <button class="dir-btn" onclick="showDir(5, this)">5 · The Finder</button>
+    <button class="dir-btn" onclick="showDir(6, this)">6 · The Collection</button>
+  </nav>
+  <button class="compare-btn" onclick="toggleCompare(this)">Compare All →</button>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════
+     DIRECTION 1: THE GALLERY
+     Image-dominant · Minimal chrome · Browsing joy
+════════════════════════════════════════════════════════════ -->
+<section class="direction-panel visible" id="dir-1">
+  <div class="dir-intro">
+    <div>
+      <h2>1 · The Gallery</h2>
+      <p>Images do the work. Minimal chrome. Four-column grid fills the screen with box art — browsing feels like walking through a puzzle shop. Owned state appears as an amber glow pressing in from the card edges. Tap reveals title, brand, and piece count. Bottom navigation keeps thumbs in reach.</p>
+    </div>
+    <div class="dir-traits">
+      <div class="trait-chip"><div class="trait-dot dot-amber"></div><span>Maximum box art, minimum UI</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-amber"></div><span>Owned glow is unmistakable at a glance</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-blue"></div><span>Great for Megan's browsing sessions</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-muted"></div><span>Relies on catalog image quality</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-muted"></div><span>Metadata only on tap/hover</span></div>
+    </div>
+  </div>
+
+  <div class="mockup-grid two-col">
+    <!-- Browse / Catalog view -->
+    <div class="mockup-frame">
+      <div class="mockup-label"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>&nbsp; Browse — Catalog</div>
+      <div class="mockup-body">
+        <div class="d1-shell">
+          <div class="d1-topbar">
+            <div class="d1-logo">puzzle<span>·</span></div>
+            <div class="d1-spacer"></div>
+            <div class="icon-btn">🔍</div>
+            <div class="icon-btn">⊞</div>
+            <div class="d1-avatar">M</div>
+          </div>
+          <div class="d1-grid">
+            <!-- Row 1 -->
+            <div class="d1-card owned-card">
+              <div class="d1-card-img puzzle-img img-forest" style="width:100%;height:100%"></div>
+              <div class="d1-owned-badge">✓ OWNED</div>
+              <div class="d1-card-overlay">
+                <div class="d1-card-title">Autumn Forest</div>
+                <div class="d1-card-meta">Ravensburger · 1000pc</div>
+              </div>
+            </div>
+            <div class="d1-card">
+              <div class="d1-card-img puzzle-img img-cafe"></div>
+              <div class="d1-card-overlay">
+                <div class="d1-card-title">Paris Café</div>
+                <div class="d1-card-meta">Buffalo · 500pc</div>
+              </div>
+            </div>
+            <div class="d1-card wanted-card">
+              <div class="d1-card-img puzzle-img img-coast"></div>
+              <div class="d1-card-overlay">
+                <div class="d1-card-title">Coastal Morning</div>
+                <div class="d1-card-meta">Cobble Hill · 1000pc</div>
+              </div>
+            </div>
+            <div class="d1-card">
+              <div class="d1-card-img puzzle-img img-market"></div>
+              <div class="d1-card-overlay">
+                <div class="d1-card-title">Flower Market</div>
+                <div class="d1-card-meta">White Mtn · 1000pc</div>
+              </div>
+            </div>
+            <!-- Row 2 -->
+            <div class="d1-card owned-card">
+              <div class="d1-card-img puzzle-img img-cabin"></div>
+              <div class="d1-owned-badge">✓ OWNED</div>
+              <div class="d1-card-overlay">
+                <div class="d1-card-title">Winter Cabin</div>
+                <div class="d1-card-meta">Cobble Hill · 500pc</div>
+              </div>
+            </div>
+            <div class="d1-card">
+              <div class="d1-card-img puzzle-img img-bird"></div>
+              <div class="d1-card-overlay">
+                <div class="d1-card-title">Blue Heron</div>
+                <div class="d1-card-meta">Buffalo · 1000pc</div>
+              </div>
+            </div>
+            <div class="d1-card">
+              <div class="d1-card-img puzzle-img img-forest"></div>
+              <div class="d1-card-overlay">
+                <div class="d1-card-title">Spring Valley</div>
+                <div class="d1-card-meta">Ravensburger · 2000pc</div>
+              </div>
+            </div>
+            <div class="d1-card wanted-card">
+              <div class="d1-card-img puzzle-img img-cafe"></div>
+              <div class="d1-card-overlay">
+                <div class="d1-card-title">Grand Hotel</div>
+                <div class="d1-card-meta">Buffalo · 750pc</div>
+              </div>
+            </div>
+          </div>
+          <div class="d1-bottom-nav">
+            <div class="d1-nav-item"><div class="d1-nav-icon">⊞</div>Browse</div>
+            <div class="d1-nav-item active"><div class="d1-nav-icon">⬡</div>Collection</div>
+            <div class="d1-nav-item"><div class="d1-nav-icon">☆</div>Wishlist</div>
+            <div class="d1-nav-item"><div class="d1-nav-icon">◎</div>Profile</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search active state -->
+    <div class="mockup-frame">
+      <div class="mockup-label"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>&nbsp; Search — Active with Duplicate Warning</div>
+      <div class="mockup-body">
+        <div class="d1-shell">
+          <div class="d1-topbar">
+            <div style="flex:1; background:var(--surface); border:1px solid var(--owned); border-radius:8px; padding:7px 12px; font-size:14px; color:var(--fg); display:flex; align-items:center; gap:8px; box-shadow: 0 0 0 3px hsl(38,85%,55%,0.12);">
+              <span style="color:var(--owned)">🔍</span>
+              <span>autumn forest</span>
+              <span style="flex:1"></span>
+              <span style="color:var(--fg-muted);font-size:12px">✕</span>
+            </div>
+          </div>
+
+          <!-- Owned warning banner -->
+          <div style="background:hsl(38,85%,55%,0.12); border-bottom:1px solid hsl(38,85%,55%,0.3); padding:10px 14px; display:flex; align-items:center; gap:8px;">
+            <span style="font-size:18px">✨</span>
+            <div>
+              <div style="font-size:13px; font-weight:600; color:var(--owned)">You already own this one</div>
+              <div style="font-size:11px; color:var(--fg-muted)">Autumn Forest · Ravensburger · 1000pc is in your collection</div>
+            </div>
+          </div>
+
+          <div class="d1-grid">
+            <div class="d1-card owned-card" style="grid-column:span 2; aspect-ratio:2/1.5;">
+              <div class="d1-card-img puzzle-img img-forest" style="width:100%;height:100%"></div>
+              <div class="d1-owned-badge">✓ OWNED</div>
+              <div class="d1-card-overlay" style="opacity:1;">
+                <div class="d1-card-title">Autumn Forest</div>
+                <div class="d1-card-meta">Ravensburger · 1000pc · In your collection</div>
+              </div>
+            </div>
+            <div class="d1-card">
+              <div class="d1-card-img puzzle-img img-forest"></div>
+              <div class="d1-card-overlay">
+                <div class="d1-card-title">Forest Path</div>
+                <div class="d1-card-meta">Buffalo · 1000pc</div>
+              </div>
+            </div>
+            <div class="d1-card">
+              <div class="d1-card-img puzzle-img img-cabin"></div>
+              <div class="d1-card-overlay">
+                <div class="d1-card-title">Autumn Cabin</div>
+                <div class="d1-card-meta">Cobble Hill · 500pc</div>
+              </div>
+            </div>
+          </div>
+          <div class="d1-bottom-nav">
+            <div class="d1-nav-item active"><div class="d1-nav-icon">🔍</div>Search</div>
+            <div class="d1-nav-item"><div class="d1-nav-icon">⬡</div>Collection</div>
+            <div class="d1-nav-item"><div class="d1-nav-icon">☆</div>Wishlist</div>
+            <div class="d1-nav-item"><div class="d1-nav-icon">◎</div>Profile</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     DIRECTION 2: THE LIBRARY
+     Dense list · Rich metadata · Power user efficiency
+════════════════════════════════════════════════════════════ -->
+<section class="direction-panel" id="dir-2">
+  <div class="dir-intro">
+    <div>
+      <h2>2 · The Library</h2>
+      <p>Efficiency over imagery. Every puzzle row is scannable: thumbnail, title, brand, piece count, and status badge in one gesture. A persistent search bar and filter row make this a tool for power users who prefer text navigation. Think Letterboxd in list mode or a well-designed todo app.</p>
+    </div>
+    <div class="dir-traits">
+      <div class="trait-chip"><div class="trait-dot dot-amber"></div><span>Most catalog per scroll — information-dense</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-amber"></div><span>Status visible without interaction</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-blue"></div><span>Great for Dan (power user) and fast checking</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-muted"></div><span>Less emotionally resonant than image-first</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-muted"></div><span>Requires good metadata on every record</span></div>
+    </div>
+  </div>
+
+  <div class="mockup-grid two-col">
+    <div class="mockup-frame">
+      <div class="mockup-label"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>&nbsp; Browse — Filter Active</div>
+      <div class="mockup-body">
+        <div class="d2-shell">
+          <div class="d2-header">
+            <div class="d2-logo-row">
+              <div class="d2-logo">puzzle<span>·</span>inventory</div>
+              <div class="d1-avatar" style="width:28px;height:28px;font-size:11px">M</div>
+            </div>
+            <div class="search-bar">
+              <span class="search-icon">🔍</span>
+              <span class="search-text">Search puzzles…</span>
+              <span class="search-kbd">⌘K</span>
+            </div>
+          </div>
+          <div class="d2-filter-row">
+            <div class="filter-chip active">All Status</div>
+            <div class="filter-chip">Ravensburger</div>
+            <div class="filter-chip">Buffalo Games</div>
+            <div class="filter-chip">Cobble Hill</div>
+            <div class="filter-chip">1000pc</div>
+            <div class="filter-chip">In Print</div>
+          </div>
+          <div class="d2-list">
+            <div class="d2-row">
+              <div class="d2-thumb owned-thumb puzzle-img img-forest"></div>
+              <div class="d2-info">
+                <div class="d2-title">Autumn Forest</div>
+                <div class="d2-meta">Ravensburger · 1,000 pieces</div>
+              </div>
+              <div class="d2-actions">
+                <div class="badge badge-owned">✓ Owned</div>
+                <div style="font-size:10px;color:var(--fg-muted)">In Print</div>
+              </div>
+            </div>
+            <div class="d2-row">
+              <div class="d2-thumb puzzle-img img-cafe"></div>
+              <div class="d2-info">
+                <div class="d2-title">Paris Café Morning</div>
+                <div class="d2-meta">Buffalo Games · 500 pieces</div>
+              </div>
+              <div class="d2-actions">
+                <div class="badge badge-none">+ Want</div>
+                <div style="font-size:10px;color:var(--fg-muted)">$19.99</div>
+              </div>
+            </div>
+            <div class="d2-row">
+              <div class="d2-thumb wanted-thumb puzzle-img img-coast"></div>
+              <div class="d2-info">
+                <div class="d2-title">Coastal Morning</div>
+                <div class="d2-meta">Cobble Hill · 1,000 pieces</div>
+              </div>
+              <div class="d2-actions">
+                <div class="badge badge-wanted">☆ Wanted</div>
+                <div style="font-size:10px;color:var(--fg-muted)">$24.99</div>
+              </div>
+            </div>
+            <div class="d2-row">
+              <div class="d2-thumb owned-thumb puzzle-img img-cabin"></div>
+              <div class="d2-info">
+                <div class="d2-title">Winter Cabin</div>
+                <div class="d2-meta">Cobble Hill · 500 pieces</div>
+              </div>
+              <div class="d2-actions">
+                <div class="badge badge-owned">✓ Owned</div>
+                <div style="font-size:10px;color:var(--fg-muted)">Out of Print</div>
+              </div>
+            </div>
+            <div class="d2-row">
+              <div class="d2-thumb puzzle-img img-market"></div>
+              <div class="d2-info">
+                <div class="d2-title">Flower Market</div>
+                <div class="d2-meta">White Mountain · 1,000 pieces</div>
+              </div>
+              <div class="d2-actions">
+                <div class="badge badge-none">+ Want</div>
+                <div style="font-size:10px;color:var(--fg-muted)">$26.99</div>
+              </div>
+            </div>
+            <div class="d2-row">
+              <div class="d2-thumb puzzle-img img-bird"></div>
+              <div class="d2-info">
+                <div class="d2-title">Blue Heron Marsh</div>
+                <div class="d2-meta">Buffalo Games · 1,000 pieces</div>
+              </div>
+              <div class="d2-actions">
+                <div class="badge badge-none">+ Want</div>
+                <div style="font-size:10px;color:var(--fg-muted)">$22.99</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mockup-frame">
+      <div class="mockup-label"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>&nbsp; My Wishlist — Buying Session Mode</div>
+      <div class="mockup-body">
+        <div class="d2-shell">
+          <div class="d2-header" style="padding-bottom:0">
+            <div style="font-family:var(--font-display);font-size:20px;font-weight:400;margin-bottom:4px">Your Wishlist <span style="color:var(--fg-muted);font-size:14px;font-weight:400">4 puzzles</span></div>
+            <div style="font-size:12px;color:var(--fg-muted);padding-bottom:12px">2 in stock now · sorted by availability</div>
+          </div>
+          <div style="background:hsl(210,70%,60%,0.08); border-bottom:1px solid hsl(210,70%,60%,0.2); padding:8px 16px; font-size:12px; color:var(--wanted);">
+            🛒 Ready to buy? 2 of your wanted puzzles are in stock today
+          </div>
+          <div class="d2-list">
+            <div class="d2-row">
+              <div class="d2-thumb wanted-thumb puzzle-img img-coast"></div>
+              <div class="d2-info">
+                <div class="d2-title">Coastal Morning</div>
+                <div class="d2-meta" style="color: hsl(120,40%,50%)">● In Stock — Amazon $24.99</div>
+              </div>
+              <div class="d2-actions">
+                <div style="padding:5px 10px; background:var(--wanted); color:white; border-radius:6px; font-size:12px; cursor:pointer; white-space:nowrap">Buy →</div>
+              </div>
+            </div>
+            <div class="d2-row">
+              <div class="d2-thumb wanted-thumb puzzle-img img-cafe"></div>
+              <div class="d2-info">
+                <div class="d2-title">Grand Hotel</div>
+                <div class="d2-meta" style="color: hsl(120,40%,50%)">● In Stock — Target $21.99</div>
+              </div>
+              <div class="d2-actions">
+                <div style="padding:5px 10px; background:var(--wanted); color:white; border-radius:6px; font-size:12px; cursor:pointer; white-space:nowrap">Buy →</div>
+              </div>
+            </div>
+            <div class="d2-row" style="opacity:0.6">
+              <div class="d2-thumb wanted-thumb puzzle-img img-market"></div>
+              <div class="d2-info">
+                <div class="d2-title">Flower Market</div>
+                <div class="d2-meta">○ Out of Stock</div>
+              </div>
+              <div class="d2-actions">
+                <div style="padding:5px 10px; background:var(--surface); border:1px solid var(--border); color:var(--fg-muted); border-radius:6px; font-size:12px; white-space:nowrap">Notify Me</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     DIRECTION 3: THE SHELF
+     Netflix rows · Horizontal scroll · Brand-first discovery
+════════════════════════════════════════════════════════════ -->
+<section class="direction-panel" id="dir-3">
+  <div class="dir-intro">
+    <div>
+      <h2>3 · The Shelf</h2>
+      <p>Horizontal rows organized by brand, then by interest: "Your Collection," "From Your Wishlist," "New from Ravensburger." Users swipe through curated lanes rather than scrolling an infinite grid. Discovery is editorial and guided. Resonates with the Netflix/Spotify mental model many users already have.</p>
+    </div>
+    <div class="dir-traits">
+      <div class="trait-chip"><div class="trait-dot dot-amber"></div><span>Familiar mental model (Netflix/Spotify)</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-amber"></div><span>Brand organization matches how collectors think</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-blue"></div><span>Discovery-forward, not just catalog lookup</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-muted"></div><span>Less suited to "is this specific puzzle in my collection?"</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-muted"></div><span>Higher build complexity for row curation logic</span></div>
+    </div>
+  </div>
+
+  <div class="mockup-grid two-col">
+    <div class="mockup-frame">
+      <div class="mockup-label"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>&nbsp; Home — Shelf View</div>
+      <div class="mockup-body">
+        <div class="d3-shell">
+          <div class="d1-topbar">
+            <div class="d1-logo" style="font-size:15px">puzzle<span style="color:var(--owned)">·</span></div>
+            <div class="d1-spacer"></div>
+            <div class="icon-btn" style="font-size:13px">🔍</div>
+            <div class="d1-avatar" style="width:28px;height:28px;font-size:11px">M</div>
+          </div>
+
+          <!-- Hero puzzle -->
+          <div class="d3-hero">
+            <div class="d3-hero-label">✓ In Your Collection</div>
+            <div class="d3-hero-title">Autumn Forest</div>
+            <div class="d3-hero-meta">Ravensburger · 1,000 pieces · Completed twice</div>
+            <div class="d3-hero-img puzzle-img img-forest"></div>
+          </div>
+
+          <!-- Your Collection row -->
+          <div class="d3-section">
+            <div class="d3-section-hdr">
+              <div class="d3-section-title">Your Collection <span style="color:var(--fg-muted);font-weight:400">84</span></div>
+              <div class="d3-see-all">See all →</div>
+            </div>
+            <div class="d3-scroll-row">
+              <div class="d3-scroll-card">
+                <div class="d3-scroll-thumb owned-ring puzzle-img img-forest"></div>
+                <div class="d3-scroll-title">Autumn Forest</div>
+                <div class="d3-scroll-brand">Ravensburger</div>
+              </div>
+              <div class="d3-scroll-card">
+                <div class="d3-scroll-thumb owned-ring puzzle-img img-cabin"></div>
+                <div class="d3-scroll-title">Winter Cabin</div>
+                <div class="d3-scroll-brand">Cobble Hill</div>
+              </div>
+              <div class="d3-scroll-card">
+                <div class="d3-scroll-thumb owned-ring puzzle-img img-bird"></div>
+                <div class="d3-scroll-title">Blue Heron</div>
+                <div class="d3-scroll-brand">Buffalo Games</div>
+              </div>
+              <div class="d3-scroll-card">
+                <div class="d3-scroll-thumb owned-ring puzzle-img img-cafe"></div>
+                <div class="d3-scroll-title">Morning Coffee</div>
+                <div class="d3-scroll-brand">Cobble Hill</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Wishlist row -->
+          <div class="d3-section">
+            <div class="d3-section-hdr">
+              <div class="d3-section-title" style="color:var(--wanted)">On Your Wishlist <span style="color:var(--fg-muted);font-weight:400">12</span></div>
+              <div class="d3-see-all">Buy now →</div>
+            </div>
+            <div class="d3-scroll-row">
+              <div class="d3-scroll-card">
+                <div class="d3-scroll-thumb wanted-ring puzzle-img img-coast"></div>
+                <div class="d3-scroll-title">Coastal Morning</div>
+                <div class="d3-scroll-brand" style="color:hsl(120,40%,50%)">In Stock $24.99</div>
+              </div>
+              <div class="d3-scroll-card">
+                <div class="d3-scroll-thumb wanted-ring puzzle-img img-market"></div>
+                <div class="d3-scroll-title">Flower Market</div>
+                <div class="d3-scroll-brand">White Mountain</div>
+              </div>
+              <div class="d3-scroll-card">
+                <div class="d3-scroll-thumb wanted-ring puzzle-img img-cafe"></div>
+                <div class="d3-scroll-title">Grand Hotel</div>
+                <div class="d3-scroll-brand" style="color:hsl(120,40%,50%)">In Stock $21.99</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mockup-frame">
+      <div class="mockup-label"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>&nbsp; Public Profile — Shared Link View</div>
+      <div class="mockup-body">
+        <div class="d3-shell">
+          <div style="padding:16px; text-align:center; border-bottom:1px solid var(--border)">
+            <div style="width:52px;height:52px;border-radius:50%;background:var(--owned);margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600;color:hsl(24,8%,8%)">M</div>
+            <div style="font-family:var(--font-display);font-size:20px;font-weight:400;margin-bottom:4px">Megan's Puzzles</div>
+            <div style="font-size:12px;color:var(--fg-muted)">mypuzzleinventory.com/u/megan</div>
+            <div style="display:flex;justify-content:center;gap:24px;margin-top:12px;font-size:13px">
+              <div><span style="font-weight:600;color:var(--owned)">84</span> <span style="color:var(--fg-muted)">owned</span></div>
+              <div><span style="font-weight:600;color:var(--wanted)">12</span> <span style="color:var(--fg-muted)">wishlist</span></div>
+              <div><span style="font-weight:600">31</span> <span style="color:var(--fg-muted)">completed</span></div>
+            </div>
+          </div>
+          <div class="d3-section">
+            <div class="d3-section-hdr">
+              <div class="d3-section-title">Megan's Wishlist</div>
+              <div style="font-size:11px;color:var(--fg-muted)">Perfect gift ideas →</div>
+            </div>
+            <div class="d3-scroll-row">
+              <div class="d3-scroll-card">
+                <div class="d3-scroll-thumb wanted-ring puzzle-img img-coast"></div>
+                <div class="d3-scroll-title">Coastal Morning</div>
+                <div class="d3-scroll-brand" style="color:hsl(120,40%,50%)">$24.99 — Buy →</div>
+              </div>
+              <div class="d3-scroll-card">
+                <div class="d3-scroll-thumb wanted-ring puzzle-img img-cafe"></div>
+                <div class="d3-scroll-title">Grand Hotel</div>
+                <div class="d3-scroll-brand" style="color:hsl(120,40%,50%)">$21.99 — Buy →</div>
+              </div>
+              <div class="d3-scroll-card">
+                <div class="d3-scroll-thumb wanted-ring puzzle-img img-market"></div>
+                <div class="d3-scroll-title">Flower Market</div>
+                <div class="d3-scroll-brand" style="color:var(--fg-muted)">Out of stock</div>
+              </div>
+            </div>
+          </div>
+          <div style="padding:12px 16px; background:hsl(24,5%,10%); border-top:1px solid var(--border); margin-top:8px">
+            <div style="font-size:12px; color:var(--fg-muted); text-align:center">Don't own a puzzle Megan wants? <span style="color:var(--wanted); cursor:pointer">Browse her full wishlist →</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     DIRECTION 4: THE DASHBOARD
+     Stats hero · Collection pride · Numbers as identity
+════════════════════════════════════════════════════════════ -->
+<section class="direction-panel" id="dir-4">
+  <div class="dir-intro">
+    <div>
+      <h2>4 · The Dashboard</h2>
+      <p>Collection stats lead. Owned count, completed count, and wishlist size appear on a data hero the moment you open the app. Quick-add search below the stats. Activity feed beneath. This makes the collection itself the homepage — you see your identity as a collector first, then go looking. High shareability of stats.</p>
+    </div>
+    <div class="dir-traits">
+      <div class="trait-chip"><div class="trait-dot dot-amber"></div><span>Collection pride and identity front-and-center</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-amber"></div><span>Stats are highly shareable (social proof)</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-blue"></div><span>Reinforces "magic moment" by quantifying it</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-muted"></div><span>Empty state is weak until 5+ puzzles added</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-muted"></div><span>Catalog browsing is one tap away, not instant</span></div>
+    </div>
+  </div>
+
+  <div class="mockup-grid two-col">
+    <div class="mockup-frame">
+      <div class="mockup-label"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>&nbsp; Home — Logged In Dashboard</div>
+      <div class="mockup-body">
+        <div class="d4-shell">
+          <div class="d1-topbar">
+            <div class="d1-logo" style="font-size:15px">puzzle<span style="color:var(--owned)">·</span></div>
+            <div class="d1-spacer"></div>
+            <div class="icon-btn" style="font-size:13px">🔍</div>
+            <div class="d1-avatar" style="width:28px;height:28px;font-size:11px">M</div>
+          </div>
+          <div class="d4-stats-hero">
+            <div class="d4-greeting">Good evening, Megan</div>
+            <div class="d4-headline">Your puzzle life, cataloged.</div>
+            <div class="d4-stats-grid">
+              <div class="d4-stat">
+                <div class="d4-stat-num amber">84</div>
+                <div class="d4-stat-label">Owned</div>
+              </div>
+              <div class="d4-stat">
+                <div class="d4-stat-num muted">31</div>
+                <div class="d4-stat-label">Completed</div>
+              </div>
+              <div class="d4-stat">
+                <div class="d4-stat-num blue">12</div>
+                <div class="d4-stat-label">Wanted</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d4-quick-add">
+            <div class="d4-quick-label">Quick-add a puzzle to your collection</div>
+            <div class="search-bar">
+              <span class="search-icon">🔍</span>
+              <span class="search-text">Search by title, brand, or piece count…</span>
+            </div>
+          </div>
+
+          <div class="d4-activity" style="margin-top:16px">
+            <div class="d4-activity-title">Recently Added</div>
+            <div class="d4-act-row">
+              <div class="d4-act-thumb puzzle-img img-forest"></div>
+              <div class="d4-act-info">
+                <div class="d4-act-title">Autumn Forest</div>
+                <div class="d4-act-sub">Ravensburger · Added 2 days ago</div>
+              </div>
+              <div class="d4-act-badge"><div class="badge badge-owned">✓ Owned</div></div>
+            </div>
+            <div class="d4-act-row">
+              <div class="d4-act-thumb puzzle-img img-cabin"></div>
+              <div class="d4-act-info">
+                <div class="d4-act-title">Winter Cabin</div>
+                <div class="d4-act-sub">Cobble Hill · Added 5 days ago</div>
+              </div>
+              <div class="d4-act-badge"><div class="badge badge-owned">✓ Owned</div></div>
+            </div>
+            <div class="d4-act-row">
+              <div class="d4-act-thumb puzzle-img img-coast"></div>
+              <div class="d4-act-info">
+                <div class="d4-act-title">Coastal Morning</div>
+                <div class="d4-act-sub">Cobble Hill · Added 1 week ago</div>
+              </div>
+              <div class="d4-act-badge"><div class="badge badge-wanted">☆ Wanted</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mockup-frame">
+      <div class="mockup-label"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>&nbsp; Duplicate Prevention — Warning State</div>
+      <div class="mockup-body">
+        <div class="d4-shell">
+          <div style="padding:16px; border-bottom:1px solid var(--border)">
+            <div style="font-family:var(--font-display);font-size:20px;font-weight:400;margin-bottom:12px">Autumn Forest</div>
+            <div style="display:flex;gap:12px;margin-bottom:12px">
+              <div class="puzzle-img img-forest" style="width:90px;height:115px;border-radius:8px;flex-shrink:0;" class="ring-owned"></div>
+              <div>
+                <div style="font-size:13px;color:var(--fg-muted);margin-bottom:4px">Ravensburger</div>
+                <div style="font-size:13px;color:var(--fg-muted);margin-bottom:4px">1,000 pieces</div>
+                <div style="font-size:13px;color:var(--fg-muted);margin-bottom:8px">Landscape · Nature</div>
+                <div style="font-size:12px; color:hsl(120,40%,55%); font-weight:500">● In Print — from $19.99</div>
+              </div>
+            </div>
+
+            <!-- Duplicate warning banner — the critical moment -->
+            <div style="background:hsl(38,85%,55%,0.12); border:1.5px solid hsl(38,85%,55%,0.4); border-radius:10px; padding:14px; margin-bottom:12px;">
+              <div style="font-weight:600;color:var(--owned);margin-bottom:4px;font-size:14px">✨ You already own this</div>
+              <div style="font-size:13px;color:var(--fg-muted)">Autumn Forest is in your collection. Added March 2, 2026.</div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div style="padding:10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;text-align:center;font-size:13px;cursor:pointer">View in Collection</div>
+              <div style="padding:10px;background:var(--wanted);border-radius:8px;text-align:center;font-size:13px;color:white;cursor:pointer">Buy as Gift →</div>
+            </div>
+          </div>
+          <div style="padding:14px 16px">
+            <div style="font-size:12px;color:var(--fg-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.06em">You Might Also Want</div>
+            <div style="display:flex;gap:10px;overflow-x:auto">
+              <div style="flex-shrink:0;width:70px">
+                <div class="puzzle-img img-forest" style="width:70px;height:90px;border-radius:6px;margin-bottom:4px"></div>
+                <div style="font-size:10px;color:var(--fg)">Forest Path</div>
+              </div>
+              <div style="flex-shrink:0;width:70px">
+                <div class="puzzle-img img-cabin" style="width:70px;height:90px;border-radius:6px;margin-bottom:4px"></div>
+                <div style="font-size:10px;color:var(--fg)">Autumn Cabin</div>
+              </div>
+              <div style="flex-shrink:0;width:70px">
+                <div class="puzzle-img img-bird" style="width:70px;height:90px;border-radius:6px;margin-bottom:4px"></div>
+                <div style="font-size:10px;color:var(--fg)">Woodland Birds</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     DIRECTION 5: THE FINDER
+     Search is the entire UI · Instant results · Mobile-native
+════════════════════════════════════════════════════════════ -->
+<section class="direction-panel" id="dir-5">
+  <div class="dir-intro">
+    <div>
+      <h2>5 · The Finder</h2>
+      <p>The search bar IS the app. No hero, no rows, no stats — just a search box at the top of a clean screen. Results appear instantly below. This is the duplicate-check use case distilled to its atomic form: open → type → 9 seconds → done. Inspired by Spotlight, Raycast, and linear.app. Zero friction path to the core promise.</p>
+    </div>
+    <div class="dir-traits">
+      <div class="trait-chip"><div class="trait-dot dot-amber"></div><span>Fastest path to the core use case (duplicate check)</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-amber"></div><span>No learning curve — everyone knows search</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-blue"></div><span>Perfect for mobile mid-scroll Instagram check</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-muted"></div><span>Weak for discovery — doesn't help with "what next?"</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-muted"></div><span>Empty state before first search feels sparse</span></div>
+    </div>
+  </div>
+
+  <div class="mockup-grid two-col">
+    <div class="mockup-frame">
+      <div class="mockup-label"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>&nbsp; Home — Search Active, Owned Result</div>
+      <div class="mockup-body">
+        <div class="d5-shell">
+          <div class="d5-topbar">
+            <div class="d5-logo">puzzle<span>·</span>inventory</div>
+            <div class="d5-search-wrap">
+              <div class="d5-search-icon">🔍</div>
+              <div class="d5-search-input" style="display:flex;align-items:center;justify-content:space-between">
+                <span>autumn forest</span>
+                <span style="color:var(--fg-muted);font-size:12px;cursor:pointer">✕</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="d5-divider">
+            <div class="divider-line"></div>
+            <span>4 results</span>
+            <div class="divider-line"></div>
+          </div>
+
+          <div class="d5-results">
+            <div class="d5-result-card owned-card" style="grid-column:span 2; display:grid; grid-template-columns:80px 1fr; gap:0; border-radius:10px; overflow:hidden; position:relative;">
+              <div class="puzzle-img img-forest" style="height:100%;min-height:80px"></div>
+              <div style="padding:12px">
+                <div style="font-size:11px;color:var(--owned);font-weight:600;margin-bottom:4px">✨ YOU ALREADY OWN THIS</div>
+                <div style="font-size:14px;font-weight:500;color:var(--fg);margin-bottom:2px">Autumn Forest</div>
+                <div style="font-size:12px;color:var(--fg-muted);margin-bottom:8px">Ravensburger · 1,000 pieces</div>
+                <div style="font-size:11px;color:var(--fg-muted)">Added March 2, 2026</div>
+              </div>
+            </div>
+            <div class="d5-result-card">
+              <div class="puzzle-img img-forest" style="width:100%;height:80px;max-height:80px"></div>
+              <div class="d5-result-info">
+                <div class="d5-result-title">Forest Path</div>
+                <div class="d5-result-meta">Buffalo · 1000pc</div>
+                <div class="badge badge-none" style="font-size:10px;">+ Want</div>
+              </div>
+            </div>
+            <div class="d5-result-card">
+              <div class="puzzle-img img-cabin" style="width:100%;height:80px;max-height:80px"></div>
+              <div class="d5-result-info">
+                <div class="d5-result-title">Autumn Cabin</div>
+                <div class="d5-result-meta">Cobble Hill · 500pc</div>
+                <div class="badge badge-none" style="font-size:10px;">+ Want</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mockup-frame">
+      <div class="mockup-label"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>&nbsp; Home — Empty State (new user)</div>
+      <div class="mockup-body">
+        <div class="d5-shell">
+          <div class="d5-topbar">
+            <div class="d5-logo">puzzle<span>·</span>inventory</div>
+            <div class="d5-search-wrap">
+              <div class="d5-search-icon">🔍</div>
+              <div class="d5-search-input" style="color:var(--fg-muted)">Search any puzzle to start your collection…</div>
+            </div>
+          </div>
+
+          <div style="flex:1; padding:24px 16px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:16px">
+            <div style="font-size:48px; opacity:0.3">🧩</div>
+            <div>
+              <div style="font-family:var(--font-display);font-size:22px;font-weight:400;margin-bottom:8px">Start with one puzzle</div>
+              <div style="font-size:14px;color:var(--fg-muted);max-width:280px;line-height:1.6">Type the name of a puzzle you own. We'll find it in our catalog of thousands.</div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:300px">
+              <div style="padding:6px 12px;background:var(--surface);border:1px solid var(--border);border-radius:16px;font-size:12px;color:var(--fg-muted);cursor:pointer">Autumn Forest</div>
+              <div style="padding:6px 12px;background:var(--surface);border:1px solid var(--border);border-radius:16px;font-size:12px;color:var(--fg-muted);cursor:pointer">Cobble Hill</div>
+              <div style="padding:6px 12px;background:var(--surface);border:1px solid var(--border);border-radius:16px;font-size:12px;color:var(--fg-muted);cursor:pointer">Ravensburger</div>
+              <div style="padding:6px 12px;background:var(--surface);border:1px solid var(--border);border-radius:16px;font-size:12px;color:var(--fg-muted);cursor:pointer">1000 pieces</div>
+              <div style="padding:6px 12px;background:var(--surface);border:1px solid var(--border);border-radius:16px;font-size:12px;color:var(--fg-muted);cursor:pointer">Buffalo Games</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     DIRECTION 6: THE COLLECTION
+     My Collection as primary view · Grid with status badges
+════════════════════════════════════════════════════════════ -->
+<section class="direction-panel" id="dir-6">
+  <div class="dir-intro">
+    <div>
+      <h2>6 · The Collection</h2>
+      <p>The collection grid is the primary screen. Tabs switch between Owned, Wanted, and Completed. Tiny status indicators in corners. Filter bar for brand/piece count. A "Share" button is always visible. This direction prioritizes Megan's identity as a collector — it's about the collection as an artifact, not search as a task.</p>
+    </div>
+    <div class="dir-traits">
+      <div class="trait-chip"><div class="trait-dot dot-amber"></div><span>Collection is the hero — matches collector identity</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-amber"></div><span>Share button always visible — drives organic growth</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-blue"></div><span>Satisfying to open daily and see the collection grow</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-muted"></div><span>Empty state is weakest of all six directions</span></div>
+      <div class="trait-chip"><div class="trait-dot dot-muted"></div><span>Catalog discovery requires navigating away</span></div>
+    </div>
+  </div>
+
+  <div class="mockup-grid two-col">
+    <div class="mockup-frame">
+      <div class="mockup-label"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>&nbsp; My Collection — Owned Tab</div>
+      <div class="mockup-body">
+        <div class="d6-shell">
+          <div class="d6-header">
+            <div class="d6-hdr-row">
+              <div>
+                <div class="d6-title">My Collection</div>
+                <div class="d6-subtitle">84 owned · 31 completed · 12 wanted</div>
+              </div>
+              <button class="d6-share-btn">⤴ Share</button>
+            </div>
+          </div>
+          <div class="d6-tabs">
+            <div class="d6-tab active">Owned <span style="color:var(--owned)">84</span></div>
+            <div class="d6-tab">Wanted <span style="color:var(--wanted)">12</span></div>
+            <div class="d6-tab">Completed 31</div>
+          </div>
+          <div class="d6-filter-bar">
+            <div class="filter-chip active">All Brands</div>
+            <div class="filter-chip">Ravensburger</div>
+            <div class="filter-chip">Cobble Hill</div>
+            <div class="filter-chip">1000pc</div>
+          </div>
+          <div class="d6-grid">
+            <div class="d6-cell owned-cell puzzle-img img-forest">
+              <div class="d6-cell-indicator ind-owned"></div>
+            </div>
+            <div class="d6-cell owned-cell puzzle-img img-cabin">
+              <div class="d6-cell-indicator ind-owned"></div>
+            </div>
+            <div class="d6-cell owned-cell puzzle-img img-bird">
+              <div class="d6-cell-indicator ind-owned"></div>
+            </div>
+            <div class="d6-cell owned-cell puzzle-img img-cafe">
+              <div class="d6-cell-indicator ind-owned"></div>
+            </div>
+            <div class="d6-cell owned-cell puzzle-img img-market">
+              <div class="d6-cell-indicator ind-owned"></div>
+            </div>
+            <div class="d6-cell owned-cell puzzle-img img-coast">
+              <div class="d6-cell-indicator ind-owned"></div>
+            </div>
+            <div class="d6-cell owned-cell puzzle-img img-forest">
+              <div class="d6-cell-indicator ind-owned"></div>
+            </div>
+            <div class="d6-cell owned-cell puzzle-img img-cabin">
+              <div class="d6-cell-indicator ind-owned"></div>
+            </div>
+            <div class="d6-cell owned-cell puzzle-img img-bird">
+              <div class="d6-cell-indicator ind-owned"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mockup-frame">
+      <div class="mockup-label"><div class="dots"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>&nbsp; My Collection — Wishlist Tab with Buy CTAs</div>
+      <div class="mockup-body">
+        <div class="d6-shell">
+          <div class="d6-header">
+            <div class="d6-hdr-row">
+              <div>
+                <div class="d6-title">My Collection</div>
+                <div class="d6-subtitle">84 owned · 31 completed · 12 wanted</div>
+              </div>
+              <button class="d6-share-btn">⤴ Share</button>
+            </div>
+          </div>
+          <div class="d6-tabs">
+            <div class="d6-tab">Owned <span style="color:var(--owned)">84</span></div>
+            <div class="d6-tab active">Wanted <span style="color:var(--wanted)">12</span></div>
+            <div class="d6-tab">Completed 31</div>
+          </div>
+          <div style="background:hsl(210,70%,60%,0.08);border-bottom:1px solid hsl(210,70%,60%,0.2);padding:8px 16px;font-size:12px;color:var(--wanted)">
+            🛒 3 in stock today — ready to buy
+          </div>
+          <div style="padding:8px 0">
+            <div class="d2-row">
+              <div class="d2-thumb wanted-thumb puzzle-img img-coast"></div>
+              <div class="d2-info">
+                <div class="d2-title">Coastal Morning</div>
+                <div class="d2-meta" style="color:hsl(120,40%,50%)">● In Stock · $24.99</div>
+              </div>
+              <div><div style="padding:6px 10px;background:var(--wanted);color:white;border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap">Buy →</div></div>
+            </div>
+            <div class="d2-row">
+              <div class="d2-thumb wanted-thumb puzzle-img img-cafe"></div>
+              <div class="d2-info">
+                <div class="d2-title">Grand Hotel</div>
+                <div class="d2-meta" style="color:hsl(120,40%,50%)">● In Stock · $21.99</div>
+              </div>
+              <div><div style="padding:6px 10px;background:var(--wanted);color:white;border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap">Buy →</div></div>
+            </div>
+            <div class="d2-row">
+              <div class="d2-thumb wanted-thumb puzzle-img img-market"></div>
+              <div class="d2-info">
+                <div class="d2-title">Flower Market</div>
+                <div class="d2-meta" style="color:hsl(120,40%,50%)">● In Stock · $26.99</div>
+              </div>
+              <div><div style="padding:6px 10px;background:var(--wanted);color:white;border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap">Buy →</div></div>
+            </div>
+            <div class="d2-row" style="opacity:0.5">
+              <div class="d2-thumb wanted-thumb puzzle-img img-bird"></div>
+              <div class="d2-info">
+                <div class="d2-title">Blue Heron Marsh</div>
+                <div class="d2-meta">○ Out of Stock</div>
+              </div>
+              <div><div style="padding:6px 10px;background:var(--surface);border:1px solid var(--border);color:var(--fg-muted);border-radius:6px;font-size:12px;white-space:nowrap">Notify</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     COMPARE OVERLAY
+════════════════════════════════════════════════════════════ -->
+<div class="compare-overlay" id="compare-overlay">
+  <div class="compare-inner">
+    <div class="compare-header">
+      <div class="compare-title">Direction Comparison</div>
+      <button class="close-btn" onclick="toggleCompare(document.querySelector('.compare-btn'))">✕ Close</button>
+    </div>
+
+    <div class="compare-grid">
+      <div class="compare-card">
+        <h3>1 · The Gallery</h3>
+        <p>Image-dominant 4-column grid. Owned state as amber glow. Metadata only on tap. Bottom nav. Maximum visual richness per screen.</p>
+        <div class="compare-best-for">Best for: Megan browsing new arrivals; visual delight; collection pride</div>
+        <div class="compare-worst-for">Weakest at: Quick text-based duplicate check; metadata density</div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+          <div style="font-size:12px;color:var(--fg-muted)">Complexity: <span style="color:var(--fg)">Medium</span></div>
+          <div style="font-size:12px;color:var(--fg-muted)">Depends on: <span style="color:var(--fg)">Image quality (catalog must have images)</span></div>
+        </div>
+      </div>
+
+      <div class="compare-card">
+        <h3>2 · The Library</h3>
+        <p>Dense list with thumbnail + metadata per row. Persistent search bar. Buy links in wishlist mode. Most information per scroll.</p>
+        <div class="compare-best-for">Best for: Power users; fast ownership check; wishlist buying session</div>
+        <div class="compare-worst-for">Weakest at: Emotional resonance; first impressions; social sharing</div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+          <div style="font-size:12px;color:var(--fg-muted)">Complexity: <span style="color:var(--fg)">Low</span></div>
+          <div style="font-size:12px;color:var(--fg-muted)">Depends on: <span style="color:var(--fg)">Good metadata on all records</span></div>
+        </div>
+      </div>
+
+      <div class="compare-card">
+        <h3>3 · The Shelf</h3>
+        <p>Netflix-style horizontal rows by brand and interest. Editorial curation feel. Hero for featured puzzle. Profile share built-in.</p>
+        <div class="compare-best-for">Best for: Discovery; brand browsing; public profile / gift-giver view</div>
+        <div class="compare-worst-for">Weakest at: The 9-second duplicate check; focused task completion</div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+          <div style="font-size:12px;color:var(--fg-muted)">Complexity: <span style="color:var(--fg)">High</span></div>
+          <div style="font-size:12px;color:var(--fg-muted)">Depends on: <span style="color:var(--fg)">Curation logic; personalization data</span></div>
+        </div>
+      </div>
+
+      <div class="compare-card">
+        <h3>4 · The Dashboard</h3>
+        <p>Stats hero (Owned/Completed/Wanted counts) above the fold. Quick-add search. Activity feed. Collection becomes identity artifact.</p>
+        <div class="compare-best-for">Best for: Returning users; stat-sharing; collection pride; retention</div>
+        <div class="compare-worst-for">Weakest at: New user empty state; first-time browsing</div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+          <div style="font-size:12px;color:var(--fg-muted)">Complexity: <span style="color:var(--fg)">Medium</span></div>
+          <div style="font-size:12px;color:var(--fg-muted)">Depends on: <span style="color:var(--fg)">Engaging empty/sparse states</span></div>
+        </div>
+      </div>
+
+      <div class="compare-card">
+        <h3>5 · The Finder</h3>
+        <p>Search bar IS the homepage. Results appear below instantly. Zero chrome. Owned warning as prominent banner. Fastest path to core use case.</p>
+        <div class="compare-best-for">Best for: Mobile duplicate check; new users; focused intent</div>
+        <div class="compare-worst-for">Weakest at: Discovery; browsing; emotional engagement; empty state</div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+          <div style="font-size:12px;color:var(--fg-muted)">Complexity: <span style="color:var(--fg)">Low</span></div>
+          <div style="font-size:12px;color:var(--fg-muted)">Depends on: <span style="color:var(--fg)">Fast search (sub-200ms feel)</span></div>
+        </div>
+      </div>
+
+      <div class="compare-card">
+        <h3>6 · The Collection</h3>
+        <p>Collection grid is the homepage. Tabs for Owned / Wanted / Completed. Dense 3-col grid with corner status dots. Share always visible.</p>
+        <div class="compare-best-for">Best for: Collector identity; daily check-in; public profile quality</div>
+        <div class="compare-worst-for">Weakest at: Empty state; catalog discovery; new user activation</div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+          <div style="font-size:12px;color:var(--fg-muted)">Complexity: <span style="color:var(--fg)">Low–Medium</span></div>
+          <div style="font-size:12px;color:var(--fg-muted)">Depends on: <span style="color:var(--fg)">Compelling empty state design</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Key question -->
+    <div style="margin-top:24px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px">
+      <div style="font-family:var(--font-display);font-size:20px;font-weight:400;margin-bottom:12px">The Core Question</div>
+      <p style="color:var(--fg-muted);font-size:14px;line-height:1.7;margin-bottom:12px">All six directions use the same color system, typography, and component primitives. The difference is <strong style="color:var(--fg)">what appears first</strong> when Megan opens the app. Your answer to one question should decide the direction:</p>
+      <div style="background:hsl(38,85%,55%,0.08);border:1px solid hsl(38,85%,55%,0.2);border-radius:8px;padding:14px;font-size:15px;color:var(--fg);font-style:italic">
+        "When Megan opens this app without a specific puzzle in mind — just to browse — what do you want her to see first?"
+      </div>
+      <div style="margin-top:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:13px">
+        <div style="padding:8px;border-radius:6px;background:hsl(24,5%,15%);color:var(--fg-muted)"><strong style="color:var(--fg)">Box art →</strong> Direction 1 or 6</div>
+        <div style="padding:8px;border-radius:6px;background:hsl(24,5%,15%);color:var(--fg-muted)"><strong style="color:var(--fg)">Her stats →</strong> Direction 4</div>
+        <div style="padding:8px;border-radius:6px;background:hsl(24,5%,15%);color:var(--fg-muted)"><strong style="color:var(--fg)">The catalog →</strong> Direction 2 or 5</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showDir(n, btn) {
+    document.querySelectorAll('.direction-panel').forEach(p => p.classList.remove('visible'));
+    document.querySelectorAll('.dir-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('dir-' + n).classList.add('visible');
+    btn.classList.add('active');
+  }
+
+  function toggleCompare(btn) {
+    const overlay = document.getElementById('compare-overlay');
+    overlay.classList.toggle('visible');
+    btn.classList.toggle('active');
+  }
+
+  // Keyboard shortcut: press 1-6 to jump to directions
+  document.addEventListener('keydown', (e) => {
+    if (e.key >= '1' && e.key <= '6') {
+      const idx = parseInt(e.key);
+      const btn = document.querySelectorAll('.dir-btn')[idx - 1];
+      if (btn) showDir(idx, btn);
+    }
+    if (e.key === 'Escape') {
+      const overlay = document.getElementById('compare-overlay');
+      if (overlay.classList.contains('visible')) {
+        overlay.classList.remove('visible');
+        document.querySelector('.compare-btn').classList.remove('active');
+      }
+    }
+  });
+</script>
+</body>
+</html>
