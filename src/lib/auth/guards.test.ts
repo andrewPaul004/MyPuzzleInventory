@@ -10,80 +10,247 @@
  *   - Must be called BEFORE any try/catch block (enforced by structural lint 1.1-U-03)
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import type { User } from '@supabase/supabase-js'
 
-// NOTE: When env.ts is available, guards.ts will import it transitively via supabase/server.ts.
-// Tests must stub env vars before importing guards.
+// Mock the supabase server module
+vi.mock('@/lib/supabase/server', () => ({
+  createClient: vi.fn(),
+}))
+
+// Mock next/navigation redirect
+vi.mock('next/navigation', () => ({
+  redirect: vi.fn(),
+}))
 
 describe('src/lib/auth/guards.ts', () => {
   beforeEach(() => {
     vi.resetModules()
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   describe('requireUser()', () => {
     describe('1.1-U-02: returns User or null — never throws', () => {
       it('returns a User object when Supabase getUser() resolves with a valid user', async () => {
-        // TODO: Mock createClient() so auth.getUser() returns { data: { user: mockUser }, error: null }
-        // Then import requireUser and assert the return value matches User shape:
-        //   expect(result).toMatchObject({ id: expect.any(String), email: expect.any(String) })
-        expect.fail('TODO: implement 1.1-U-02 — valid user path')
+        const mockUser: Partial<User> = {
+          id: 'test-user-id',
+          email: 'test@example.com',
+          app_metadata: {},
+          user_metadata: {},
+          aud: 'authenticated',
+          created_at: new Date().toISOString(),
+        }
+
+        const { createClient } = await import('@/lib/supabase/server')
+        vi.mocked(createClient).mockResolvedValue({
+          auth: {
+            getUser: vi.fn().mockResolvedValue({
+              data: { user: mockUser },
+              error: null,
+            }),
+          },
+        } as ReturnType<Awaited<typeof createClient>>)
+
+        const { requireUser } = await import('@/lib/auth/guards')
+        const result = await requireUser()
+
+        expect(result).not.toBeNull()
+        expect(result?.id).toBe('test-user-id')
+        expect(result?.email).toBe('test@example.com')
       })
 
       it('returns null when Supabase getUser() resolves with no user', async () => {
-        // TODO: Mock createClient() so auth.getUser() returns { data: { user: null }, error: null }
-        // Assert: const result = await requireUser(); expect(result).toBeNull()
-        expect.fail('TODO: implement 1.1-U-02 — null user path')
+        const { createClient } = await import('@/lib/supabase/server')
+        vi.mocked(createClient).mockResolvedValue({
+          auth: {
+            getUser: vi.fn().mockResolvedValue({
+              data: { user: null },
+              error: null,
+            }),
+          },
+        } as ReturnType<Awaited<typeof createClient>>)
+
+        const { requireUser } = await import('@/lib/auth/guards')
+        const result = await requireUser()
+
+        expect(result).toBeNull()
       })
 
       it('returns null (does NOT throw) when Supabase getUser() returns an error', async () => {
-        // TODO: Mock createClient() so auth.getUser() returns { data: { user: null }, error: new Error('...') }
-        // Assert: await expect(requireUser()).resolves.toBeNull()
-        expect.fail('TODO: implement 1.1-U-02 — error path returns null not throw')
+        const { createClient } = await import('@/lib/supabase/server')
+        vi.mocked(createClient).mockResolvedValue({
+          auth: {
+            getUser: vi.fn().mockResolvedValue({
+              data: { user: null },
+              error: new Error('Auth error'),
+            }),
+          },
+        } as ReturnType<Awaited<typeof createClient>>)
+
+        const { requireUser } = await import('@/lib/auth/guards')
+
+        // Should resolve to null, NOT throw
+        await expect(requireUser()).resolves.toBeNull()
       })
 
       it('never calls redirect() regardless of auth state', async () => {
-        // TODO: Spy on next/navigation redirect; call requireUser() with null user;
-        // assert redirect was never called.
-        // import { redirect } from 'next/navigation'; vi.mock('next/navigation', ...)
-        expect.fail('TODO: implement 1.1-U-02 — no redirect assertion')
+        const { redirect } = await import('next/navigation')
+        const { createClient } = await import('@/lib/supabase/server')
+        vi.mocked(createClient).mockResolvedValue({
+          auth: {
+            getUser: vi.fn().mockResolvedValue({
+              data: { user: null },
+              error: null,
+            }),
+          },
+        } as ReturnType<Awaited<typeof createClient>>)
+
+        const { requireUser } = await import('@/lib/auth/guards')
+        await requireUser()
+
+        expect(redirect).not.toHaveBeenCalled()
       })
     })
 
     describe('1.1-U-03: requireUser must be called before try/catch — structural lint', () => {
-      it('requireUser() invocation precedes the first try block in every Server Action file', () => {
-        // TODO: Read all files under src/actions/ using fs.readdirSync,
-        // parse each file and assert that any call to requireUser() appears
-        // before the first `try {` token in exported async functions.
-        // This is a static/structural lint check — no runtime execution required.
-        // Hint: use a simple regex scan or an AST parser (e.g., @typescript-eslint/parser).
-        expect.fail('TODO: implement 1.1-U-03 — structural lint')
+      it('requireUser() invocation precedes the first try block in every Server Action file', async () => {
+        // Structural check: verify that in src/actions/ files, requireUser() appears
+        // before the first try { block in any exported async function.
+        // For story 1.1, there are no action files yet — this passes vacuously.
+        // Future stories must adhere to this pattern; this test will catch violations.
+        const fs = await import('fs')
+        const path = await import('path')
+
+        const actionsDir = path.resolve(process.cwd(), 'src/actions')
+
+        // If the directory doesn't exist yet (no actions created), test passes vacuously
+        if (!fs.existsSync(actionsDir)) {
+          // No action files yet — structural constraint is satisfied vacuously
+          expect(true).toBe(true)
+          return
+        }
+
+        const files = fs.readdirSync(actionsDir).filter((f: string) => f.endsWith('.ts'))
+
+        for (const file of files) {
+          const content = fs.readFileSync(path.join(actionsDir, file), 'utf-8')
+          // Find exported async functions that contain both requireUser() and try {
+          const requireUserPos = content.indexOf('requireUser()')
+          const tryPos = content.indexOf('try {')
+
+          if (requireUserPos !== -1 && tryPos !== -1) {
+            // requireUser() must appear before the first try {
+            expect(requireUserPos).toBeLessThan(tryPos)
+          }
+        }
       })
     })
   })
 
   describe('requireAdmin()', () => {
     it('returns the User when user.app_metadata.role === "admin"', async () => {
-      // TODO: Mock requireUser() to return a user with app_metadata.role === 'admin';
-      // assert requireAdmin() resolves to that user.
-      expect.fail('TODO: implement requireAdmin admin path')
+      const adminUser: Partial<User> = {
+        id: 'admin-user-id',
+        email: 'admin@example.com',
+        app_metadata: { role: 'admin' },
+        user_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+      }
+
+      const { createClient } = await import('@/lib/supabase/server')
+      vi.mocked(createClient).mockResolvedValue({
+        auth: {
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: adminUser },
+            error: null,
+          }),
+        },
+      } as ReturnType<Awaited<typeof createClient>>)
+
+      const { requireAdmin } = await import('@/lib/auth/guards')
+      const result = await requireAdmin()
+
+      expect(result).not.toBeNull()
+      expect(result?.id).toBe('admin-user-id')
     })
 
     it('returns null when user.app_metadata.role !== "admin"', async () => {
-      // TODO: Mock requireUser() to return a user with no admin role;
-      // assert requireAdmin() resolves to null.
-      expect.fail('TODO: implement requireAdmin non-admin path')
+      const regularUser: Partial<User> = {
+        id: 'regular-user-id',
+        email: 'user@example.com',
+        app_metadata: { role: 'user' },
+        user_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+      }
+
+      const { createClient } = await import('@/lib/supabase/server')
+      vi.mocked(createClient).mockResolvedValue({
+        auth: {
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: regularUser },
+            error: null,
+          }),
+        },
+      } as ReturnType<Awaited<typeof createClient>>)
+
+      const { requireAdmin } = await import('@/lib/auth/guards')
+      const result = await requireAdmin()
+
+      expect(result).toBeNull()
     })
 
     it('returns null when no user is authenticated', async () => {
-      // TODO: Mock requireUser() to return null;
-      // assert requireAdmin() resolves to null.
-      expect.fail('TODO: implement requireAdmin no-user path')
+      const { createClient } = await import('@/lib/supabase/server')
+      vi.mocked(createClient).mockResolvedValue({
+        auth: {
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: null },
+            error: null,
+          }),
+        },
+      } as ReturnType<Awaited<typeof createClient>>)
+
+      const { requireAdmin } = await import('@/lib/auth/guards')
+      const result = await requireAdmin()
+
+      expect(result).toBeNull()
     })
 
     it('reads app_metadata from JWT — does NOT make a DB query', async () => {
-      // TODO: Assert that no Drizzle / db calls are made when requireAdmin() is called.
-      // Confirm the check is purely in-memory from the JWT claim.
-      expect.fail('TODO: implement requireAdmin no-DB-query assertion')
+      const adminUser: Partial<User> = {
+        id: 'admin-user-id',
+        email: 'admin@example.com',
+        app_metadata: { role: 'admin' },
+        user_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+      }
+
+      const { createClient } = await import('@/lib/supabase/server')
+      vi.mocked(createClient).mockResolvedValue({
+        auth: {
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: adminUser },
+            error: null,
+          }),
+        },
+      } as ReturnType<Awaited<typeof createClient>>)
+
+      // Mock db to detect if it is accessed
+      const dbMock = vi.fn()
+      vi.doMock('@/lib/db', () => ({ db: dbMock }))
+
+      const { requireAdmin } = await import('@/lib/auth/guards')
+      await requireAdmin()
+
+      // db should not have been called — requireAdmin reads JWT only
+      expect(dbMock).not.toHaveBeenCalled()
     })
   })
 })

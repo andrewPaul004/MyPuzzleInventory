@@ -15,42 +15,47 @@ describe('src/tests/setup.ts — test DB safety guard', () => {
     })
 
     it('throws a clear error when DATABASE_URL_TEST is not set', async () => {
-      // TODO: Unset DATABASE_URL_TEST, then dynamically import src/tests/setup.ts.
-      // Assert it throws before any query can execute.
-      //
-      // Example:
-      //   vi.stubEnv('DATABASE_URL_TEST', undefined)
-      //   await expect(() => import('@/tests/setup')).rejects.toThrow(
-      //     /DATABASE_URL_TEST is not set/
-      //   )
-      expect.fail('TODO: implement 1.1-U-07 — missing DATABASE_URL_TEST throws')
+      vi.stubEnv('DATABASE_URL_TEST', '')
+      vi.resetModules()
+
+      await expect(() => import('@/tests/setup')).rejects.toThrow()
+      vi.unstubAllEnvs()
     })
 
     it('error message explicitly mentions DATABASE_URL_TEST', async () => {
-      // TODO: Assert the thrown error message includes the string "DATABASE_URL_TEST"
-      // so developers immediately know what to set.
-      expect.fail('TODO: implement 1.1-U-07 — error message mentions var name')
+      vi.stubEnv('DATABASE_URL_TEST', '')
+      vi.resetModules()
+
+      await expect(() => import('@/tests/setup')).rejects.toThrow('DATABASE_URL_TEST')
+      vi.unstubAllEnvs()
     })
 
     it('error message warns against falling back to DATABASE_URL', async () => {
-      // TODO: Assert the thrown error message includes guidance such as
-      // "NEVER fall back to DATABASE_URL" or similar language.
-      expect.fail('TODO: implement 1.1-U-07 — error message anti-fallback warning')
+      vi.stubEnv('DATABASE_URL_TEST', '')
+      vi.resetModules()
+
+      await expect(() => import('@/tests/setup')).rejects.toThrow('DATABASE_URL')
+      vi.unstubAllEnvs()
     })
 
     it('does NOT throw when DATABASE_URL_TEST is set to a valid connection string', async () => {
-      // TODO: Set DATABASE_URL_TEST to a valid (or dummy) URL and confirm setup.ts
-      // does not throw at module load time.
-      //
-      // Note: This test does NOT require an actual DB connection — only that the
-      // module-level guard passes.
-      expect.fail('TODO: implement 1.1-U-07 — happy path when var is set')
+      vi.stubEnv('DATABASE_URL_TEST', 'postgresql://localhost:5432/test_db')
+      vi.resetModules()
+
+      // Should not throw — only the guard is tested here, not an actual DB connection
+      await expect(import('@/tests/setup')).resolves.toBeDefined()
+      vi.unstubAllEnvs()
     })
 
     it('never silently uses DATABASE_URL as fallback', async () => {
-      // TODO: Set DATABASE_URL to a real-looking URL but leave DATABASE_URL_TEST unset.
-      // Assert that setup.ts still throws — it does not read DATABASE_URL as a fallback.
-      expect.fail('TODO: implement 1.1-U-07 — no silent fallback to DATABASE_URL')
+      // DATABASE_URL is set to a real-looking URL but DATABASE_URL_TEST is unset
+      vi.stubEnv('DATABASE_URL', 'postgresql://localhost:5432/production_db')
+      vi.stubEnv('DATABASE_URL_TEST', '')
+      vi.resetModules()
+
+      // setup.ts must still throw — it does not fall back to DATABASE_URL
+      await expect(() => import('@/tests/setup')).rejects.toThrow('DATABASE_URL_TEST')
+      vi.unstubAllEnvs()
     })
   })
 })

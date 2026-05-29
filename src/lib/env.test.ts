@@ -6,7 +6,7 @@
  * when any required environment variable is absent.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 describe('src/lib/env.ts — Zod-validated environment variables', () => {
   describe('1.1-U-01: env.ts throws on missing required var', () => {
@@ -22,42 +22,71 @@ describe('src/lib/env.ts — Zod-validated environment variables', () => {
       'NEXT_PUBLIC_APP_URL',
     ]
 
+    // Valid dummy values for all required vars
+    const validEnv: Record<string, string> = {
+      NEXT_PUBLIC_SUPABASE_URL: 'https://test.supabase.co',
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'test-anon-key',
+      SUPABASE_SERVICE_ROLE_KEY: 'test-service-role-key',
+      DATABASE_URL: 'postgresql://localhost:5432/test',
+      STRIPE_SECRET_KEY: 'sk_test_dummy',
+      STRIPE_WEBHOOK_SECRET: 'whsec_test_dummy',
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_dummy',
+      STRIPE_PREMIUM_PRICE_ID: 'price_test_dummy',
+      NEXT_PUBLIC_APP_URL: 'http://localhost:3000',
+    }
+
     beforeEach(() => {
-      // Clear module registry so env.ts re-evaluates on each import
       vi.resetModules()
     })
 
     it('throws at module load when a required env var is absent', async () => {
-      // TODO: Save all required env vars, unset one, re-import env.ts, assert throw.
-      // Implementation note: use vi.stubEnv() to remove a required var, then
-      // dynamically import '@/lib/env' and expect it to throw (ZodError or similar).
-      // Example:
-      //   vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', undefined)
-      //   await expect(() => import('@/lib/env')).rejects.toThrow()
-      expect.fail('TODO: implement 1.1-U-01')
+      vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', '')
+      await expect(() => import('@/lib/env')).rejects.toThrow()
+      vi.unstubAllEnvs()
     })
 
     it.each(requiredVars)(
       'throws when %s is missing',
       async (varName) => {
-        // TODO: For each required var, unset it and confirm env.ts throws.
-        // vi.stubEnv(varName, undefined)
-        // vi.resetModules()
-        // await expect(() => import('@/lib/env')).rejects.toThrow()
-        expect.fail(`TODO: implement 1.1-U-01 for ${varName}`)
+        // Set all required vars to valid values
+        Object.entries(validEnv).forEach(([key, value]) => {
+          vi.stubEnv(key, value)
+        })
+        // Then remove the specific required var
+        vi.stubEnv(varName, '')
+
+        vi.resetModules()
+        await expect(() => import('@/lib/env')).rejects.toThrow()
+        vi.unstubAllEnvs()
       }
     )
 
     it('succeeds when all required env vars are present', async () => {
-      // TODO: Stub all required vars with valid dummy values and assert the
-      // module loads without throwing.
-      expect.fail('TODO: implement happy-path for 1.1-U-01')
+      Object.entries(validEnv).forEach(([key, value]) => {
+        vi.stubEnv(key, value)
+      })
+
+      vi.resetModules()
+      const { env } = await import('@/lib/env')
+      expect(env).toBeDefined()
+      expect(env.NEXT_PUBLIC_SUPABASE_URL).toBe('https://test.supabase.co')
+      vi.unstubAllEnvs()
     })
 
     it('DATABASE_URL_TEST is optional — absence does not throw in env.ts', async () => {
-      // TODO: Ensure DATABASE_URL_TEST absence does not cause env.ts to throw.
-      // The hard-fail for DATABASE_URL_TEST lives in src/tests/setup.ts, not env.ts.
-      expect.fail('TODO: implement 1.1-U-01 optional-var check')
+      // Set all required vars
+      Object.entries(validEnv).forEach(([key, value]) => {
+        vi.stubEnv(key, value)
+      })
+      // Explicitly unset DATABASE_URL_TEST
+      vi.stubEnv('DATABASE_URL_TEST', '')
+
+      vi.resetModules()
+      // env.ts should NOT throw — DATABASE_URL_TEST is optional in env.ts
+      // (The hard-fail for DATABASE_URL_TEST lives in src/tests/setup.ts)
+      const { env } = await import('@/lib/env')
+      expect(env).toBeDefined()
+      vi.unstubAllEnvs()
     })
   })
 })
