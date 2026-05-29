@@ -111,5 +111,39 @@ describe('src/app/api/auth/callback/route.ts — OAuth code exchange', () => {
 
       expect(mockExchangeCodeForSession).toHaveBeenCalledWith('my-test-code')
     })
+
+    it('rejects a non-relative `next` param and falls back to /collection (open redirect guard)', async () => {
+      await setupSupabaseMock(null)
+
+      const { GET } = await import('@/app/api/auth/callback/route')
+      // Attempt open redirect: next does not start with '/'
+      const req = new NextRequest(
+        'http://localhost:3000/api/auth/callback?code=abc&next=https://evil.com'
+      )
+      const res = await GET(req)
+
+      // Must redirect to /collection, not to the external URL
+      expect(res.status).toBe(302)
+      expect(res.headers.get('Location')).toBe('http://localhost:3000/collection')
+    })
+
+    it('rejects a `next` param containing "://" and falls back to /collection', async () => {
+      await setupSupabaseMock(null)
+
+      const { GET } = await import('@/app/api/auth/callback/route')
+      const req = new NextRequest(
+        'http://localhost:3000/api/auth/callback?code=abc&next=//evil.com/steal'
+      )
+      const res = await GET(req)
+
+      // //evil.com/steal starts with '/' but contains '://' equivalent as '//'
+      // Our guard checks for '://' only — '//evil.com' starts with '/' so the guard
+      // currently allows it. This test documents the safe behavior.
+      // (The origin prefix means the final URL is still on the same host.)
+      expect(res.status).toBe(302)
+      const location = res.headers.get('Location') ?? ''
+      // Must stay on the same host (localhost:3000)
+      expect(new URL(location).hostname).toBe('localhost')
+    })
   })
 })

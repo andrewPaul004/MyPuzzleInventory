@@ -13,7 +13,8 @@ describe('src/lib/env.ts — Zod-validated environment variables', () => {
     const requiredVars = [
       'NEXT_PUBLIC_SUPABASE_URL',
       'NEXT_PUBLIC_SUPABASE_ANON_KEY',
-      'SUPABASE_SERVICE_ROLE_KEY',
+      // NOTE: SUPABASE_SERVICE_ROLE_KEY is intentionally NOT in this list.
+      // It must only exist in src/lib/db/admin/ — never in the general env object.
       'DATABASE_URL',
       'STRIPE_SECRET_KEY',
       'STRIPE_WEBHOOK_SECRET',
@@ -26,7 +27,7 @@ describe('src/lib/env.ts — Zod-validated environment variables', () => {
     const validEnv: Record<string, string> = {
       NEXT_PUBLIC_SUPABASE_URL: 'https://test.supabase.co',
       NEXT_PUBLIC_SUPABASE_ANON_KEY: 'test-anon-key',
-      SUPABASE_SERVICE_ROLE_KEY: 'test-service-role-key',
+      // SUPABASE_SERVICE_ROLE_KEY is NOT included — it must not be in the general env object.
       DATABASE_URL: 'postgresql://localhost:5432/test',
       STRIPE_SECRET_KEY: 'sk_test_dummy',
       STRIPE_WEBHOOK_SECRET: 'whsec_test_dummy',
@@ -70,6 +71,21 @@ describe('src/lib/env.ts — Zod-validated environment variables', () => {
       const { env } = await import('@/lib/env')
       expect(env).toBeDefined()
       expect(env.NEXT_PUBLIC_SUPABASE_URL).toBe('https://test.supabase.co')
+      vi.unstubAllEnvs()
+    })
+
+    it('SUPABASE_SERVICE_ROLE_KEY is NOT present in the general env object', async () => {
+      // Security: SUPABASE_SERVICE_ROLE_KEY must only live in src/lib/db/admin/.
+      // It must never be accessible via the general env object importable by any server module.
+      Object.entries(validEnv).forEach(([key, value]) => {
+        vi.stubEnv(key, value)
+      })
+      vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'should-not-appear')
+
+      vi.resetModules()
+      const { env } = await import('@/lib/env')
+      // The key must not appear on the env object at all
+      expect('SUPABASE_SERVICE_ROLE_KEY' in env).toBe(false)
       vi.unstubAllEnvs()
     })
 

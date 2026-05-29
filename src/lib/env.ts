@@ -4,7 +4,8 @@ const envSchema = z.object({
   // Supabase
   NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
+  // NOTE: SUPABASE_SERVICE_ROLE_KEY is intentionally absent here.
+  // It must only be accessed in src/lib/db/admin/ — never in the general env object.
   DATABASE_URL: z.string().url(),
 
   // Stripe (required at startup — set dummy values for local dev if not configuring Stripe yet)

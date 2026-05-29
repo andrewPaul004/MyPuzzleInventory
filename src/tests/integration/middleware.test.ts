@@ -121,18 +121,21 @@ describe('src/middleware.ts — session refresh, no redirects', () => {
     })
 
     it('never returns a redirect response (301, 302, 307, 308) under any condition', async () => {
-      const { createServerClient } = await import('@supabase/ssr')
       const scenarios = [
         { id: 'user-id', email: 'user@example.com' }, // valid session
         null, // no session
       ]
 
       for (const user of scenarios) {
+        // Reset modules FIRST so each scenario gets a fresh module graph with a fresh mock.
+        // Setting up the mock BEFORE resetModules would leave the mock on the stale module
+        // reference, causing the fresh import to use the un-mocked version.
+        vi.resetModules()
+        const { createServerClient } = await import('@supabase/ssr')
         vi.mocked(createServerClient).mockReturnValue(
           makeSupabaseMock(makeGetUserMock(user)) as ReturnType<typeof createServerClient>
         )
 
-        vi.resetModules()
         const { middleware } = await import('@/middleware')
         const req = new NextRequest('http://localhost:3000/some-page')
         const res = await middleware(req)
