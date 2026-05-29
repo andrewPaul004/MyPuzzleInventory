@@ -58,7 +58,7 @@ describe.skipIf(SKIP_INTEGRATION)('Database migration integration tests', () => 
         ORDER BY ordinal_position
       `
       expect(result.length).toBeGreaterThan(0)
-      const columnNames = result.map((r: { column_name: string }) => r.column_name)
+      const columnNames = result.map((r) => (r as { column_name: string }).column_name)
       expect(columnNames).toContain('id')
       expect(columnNames).toContain('email')
       expect(columnNames).toContain('deleted_at')
@@ -71,7 +71,9 @@ describe.skipIf(SKIP_INTEGRATION)('Database migration integration tests', () => 
         WHERE table_schema = 'public' AND table_name = 'profiles'
         ORDER BY ordinal_position
       `
-      const idCol = result.find((r: { column_name: string }) => r.column_name === 'id')
+      const idCol = result.find((r) => (r as { column_name: string }).column_name === 'id') as
+        | { column_name: string; data_type: string; is_nullable: string }
+        | undefined
       expect(idCol).toBeDefined()
       expect(idCol?.data_type).toBe('uuid')
     })

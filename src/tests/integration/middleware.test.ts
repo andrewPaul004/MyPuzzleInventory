@@ -92,10 +92,10 @@ describe('src/middleware.ts — session refresh, no redirects', () => {
     it('sets updated session cookie in the response when session was refreshed', async () => {
       const { createServerClient } = await import('@supabase/ssr')
       // Simulate setAll being called to update cookies
-      let capturedSetAll: ((cookies: Array<{ name: string; value: string; options: unknown }>) => void) | undefined
+      let capturedSetAll: ((cookies: Array<{ name: string; value: string; options?: unknown }>) => void) | undefined
 
       vi.mocked(createServerClient).mockImplementation((_url, _key, options) => {
-        capturedSetAll = options.cookies.setAll
+        capturedSetAll = options.cookies.setAll as typeof capturedSetAll
         return {
           auth: {
             getUser: vi.fn().mockImplementation(async () => {

@@ -53,7 +53,7 @@ describe('src/lib/auth/guards.ts', () => {
               error: null,
             }),
           },
-        } as ReturnType<Awaited<typeof createClient>>)
+        } as unknown as Awaited<ReturnType<typeof createClient>>)
 
         const { requireUser } = await import('@/lib/auth/guards')
         const result = await requireUser()
@@ -72,7 +72,7 @@ describe('src/lib/auth/guards.ts', () => {
               error: null,
             }),
           },
-        } as ReturnType<Awaited<typeof createClient>>)
+        } as unknown as Awaited<ReturnType<typeof createClient>>)
 
         const { requireUser } = await import('@/lib/auth/guards')
         const result = await requireUser()
@@ -89,7 +89,7 @@ describe('src/lib/auth/guards.ts', () => {
               error: new Error('Auth error'),
             }),
           },
-        } as ReturnType<Awaited<typeof createClient>>)
+        } as unknown as Awaited<ReturnType<typeof createClient>>)
 
         const { requireUser } = await import('@/lib/auth/guards')
 
@@ -107,7 +107,7 @@ describe('src/lib/auth/guards.ts', () => {
               error: null,
             }),
           },
-        } as ReturnType<Awaited<typeof createClient>>)
+        } as unknown as Awaited<ReturnType<typeof createClient>>)
 
         const { requireUser } = await import('@/lib/auth/guards')
         await requireUser()
@@ -170,7 +170,7 @@ describe('src/lib/auth/guards.ts', () => {
             error: null,
           }),
         },
-      } as ReturnType<Awaited<typeof createClient>>)
+      } as unknown as Awaited<ReturnType<typeof createClient>>)
 
       const { requireAdmin } = await import('@/lib/auth/guards')
       const result = await requireAdmin()
@@ -197,7 +197,7 @@ describe('src/lib/auth/guards.ts', () => {
             error: null,
           }),
         },
-      } as ReturnType<Awaited<typeof createClient>>)
+      } as unknown as Awaited<ReturnType<typeof createClient>>)
 
       const { requireAdmin } = await import('@/lib/auth/guards')
       const result = await requireAdmin()
@@ -214,7 +214,7 @@ describe('src/lib/auth/guards.ts', () => {
             error: null,
           }),
         },
-      } as ReturnType<Awaited<typeof createClient>>)
+      } as unknown as Awaited<ReturnType<typeof createClient>>)
 
       const { requireAdmin } = await import('@/lib/auth/guards')
       const result = await requireAdmin()
@@ -240,7 +240,7 @@ describe('src/lib/auth/guards.ts', () => {
             error: null,
           }),
         },
-      } as ReturnType<Awaited<typeof createClient>>)
+      } as unknown as Awaited<ReturnType<typeof createClient>>)
 
       // Mock db to detect if it is accessed
       const dbMock = vi.fn()

@@ -9,3 +9,6 @@ if (!process.env.DATABASE_URL_TEST) {
 
 // DB connection lifecycle only — no seed data here.
 // Per-test seed data belongs in individual test files.
+
+// Marks this file as an ES module so it can be dynamically imported by setup.test.ts.
+export {}

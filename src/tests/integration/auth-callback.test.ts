@@ -37,7 +37,7 @@ describe('src/app/api/auth/callback/route.ts — OAuth code exchange', () => {
         auth: {
           exchangeCodeForSession: mockExchangeCodeForSession.mockResolvedValue({ error }),
         },
-      } as ReturnType<Awaited<typeof createClient>>)
+      } as unknown as Awaited<ReturnType<typeof createClient>>)
     }
 
     it('returns a 302 redirect to /collection when no `next` param is provided', async () => {
