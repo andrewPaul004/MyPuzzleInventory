@@ -3,19 +3,95 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* shadcn/ui base tokens */
+  --background: 0 0% 100%;
+  --foreground: 24 8% 8%;
+  --card: 0 0% 100%;
+  --card-foreground: 24 8% 8%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 24 8% 8%;
+  --primary: 38 85% 55%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 70% 60%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 24 5% 95%;
+  --muted-foreground: 24 5% 40%;
+  --accent: 24 5% 90%;
+  --accent-foreground: 24 8% 8%;
+  --destructive: 0 65% 55%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 24 5% 88%;
+  --input: 24 5% 88%;
+  --ring: 38 85% 55%;
+  --radius: 0.5rem;
+
+  /* Brand semantic tokens — H S% L% format (no hsl() wrapper, shadcn convention) */
+  /* Tailwind consumes via hsl(var(--brand-owned)) */
+  --brand-owned: 38 85% 55%;        /* warm amber — the catch state */
+  --brand-wanted: 210 70% 60%;      /* cool blue — anticipatory */
+  --brand-neutral: 24 5% 40%;
+  --brand-destructive: 0 65% 55%;
+
+  /* Owned state glow */
+  --glow-owned: 0 0 0 2px hsl(38 85% 55%), 0 0 12px 2px hsl(38 85% 55% / 0.35);
+
+  /* Typography scale — major-third ratio (1.250), clamp() fluid */
+  --text-xs:      clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+  --text-sm:      clamp(0.75rem, 0.75rem + 0.35vw, 0.875rem);
+  --text-base:    clamp(0.875rem, 0.875rem + 0.4vw, 1rem);
+  --text-lg:      clamp(1rem, 1rem + 0.5vw, 1.25rem);
+  --text-xl:      clamp(1.125rem, 1.1rem + 0.6vw, 1.5rem);
+  --text-2xl:     clamp(1.25rem, 1.2rem + 0.8vw, 1.875rem);
+  --text-3xl:     clamp(1.5rem, 1.4rem + 1vw, 2.25rem);
+  --text-display: clamp(1.75rem, 1.6rem + 1.5vw, 3rem);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+.dark {
+  /* shadcn/ui dark base tokens */
+  --background: 24 8% 8%;            /* Void Walnut */
+  --foreground: 38 21% 93%;          /* #F0EDE8 warm off-white — never pure white */
+  --card: 24 7% 11%;
+  --card-foreground: 38 21% 93%;
+  --popover: 24 7% 11%;
+  --popover-foreground: 38 21% 93%;
+  --primary: 38 85% 55%;
+  --primary-foreground: 24 8% 8%;
+  --secondary: 210 70% 60%;
+  --secondary-foreground: 24 8% 8%;
+  --muted: 24 6% 15%;
+  --muted-foreground: 24 5% 60%;
+  --accent: 24 6% 18%;
+  --accent-foreground: 38 21% 93%;
+  --destructive: 0 65% 55%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 24 5% 20%;
+  --input: 24 5% 20%;
+  --ring: 38 85% 55%;
+
+  /* Brand tokens — dark variants */
+  --brand-owned: 38 85% 55%;
+  --brand-wanted: 210 70% 60%;
+  --brand-neutral: 24 5% 40%;
+  --brand-destructive: 0 65% 55%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-inter), system-ui, sans-serif;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+/* Dark mode body text — warm off-white, never pure white */
+.dark body {
+  color: #F0EDE8;
+}
+
+/* Display typography — Fraunces for headings and puzzle names */
+.font-display {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-variation-settings: 'opsz' 144, 'wght' 600, 'WONK' 1;
 }
