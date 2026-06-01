@@ -15,3 +15,20 @@ node_modules/
 dist/
 build/
 *.log
+
+# Next.js
+/.next/
+/out/
+
+# local env files
+.env*.local
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Test auth state
+e2e/.auth/
