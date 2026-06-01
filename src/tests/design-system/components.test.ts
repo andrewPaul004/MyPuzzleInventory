@@ -80,13 +80,22 @@ describe('Story 1.2 — Design System Component Tests', () => {
       expect(layout).toContain('--font-fraunces')
     })
 
-    it('Fraunces axes include opsz, wght, WONK', () => {
-      // TODO: implement after layout.tsx is updated
-      // Variable font axes must be declared for correct rendering
+    it('Fraunces axes include opsz, WONK, SOFT in next/font/google config', () => {
+      // next/font/google does not accept 'wght' as a named axis for variable fonts —
+      // weight variation is handled via font-variation-settings in globals.css (.font-display).
+      // The registered axes are: 'opsz' (optical size), 'WONK' (wonky), 'SOFT' (softness).
       const layout = readLayout()
       expect(layout).toContain('opsz')
-      expect(layout).toContain('wght')
       expect(layout).toContain('WONK')
+      expect(layout).toContain('SOFT')
+    })
+
+    it('globals.css .font-display applies wght via font-variation-settings', () => {
+      // wght is applied through CSS font-variation-settings, not the next/font/google axes array
+      const cssPath = path.join(PROJECT_ROOT, 'src', 'app', 'globals.css')
+      const css = fs.existsSync(cssPath) ? fs.readFileSync(cssPath, 'utf-8') : ''
+      expect(css).toContain("font-variation-settings")
+      expect(css).toContain("'wght'")
     })
 
     it('Inter is imported from next/font/google in layout.tsx', () => {

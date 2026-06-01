@@ -121,6 +121,29 @@ describe('Story 1.2 — Design Token Unit Tests', () => {
     })
   })
 
+  describe('1.2-AC-03: owned state glow tokens defined', () => {
+    it('globals.css :root defines --glow-owned CSS custom property', () => {
+      // AC #3: --glow-owned must be a box-shadow value used by the owned ring
+      const css = readGlobalsCss()
+      expect(css).toContain('--glow-owned:')
+    })
+
+    it('globals.css --glow-owned uses hsl(38 85% 55%) (brand-owned amber)', () => {
+      // The glow must use the exact brand-owned colour — not an arbitrary amber
+      const css = readGlobalsCss()
+      const glowMatch = css.match(/--glow-owned:\s*([^;]+);/)
+      expect(glowMatch).not.toBeNull()
+      expect(glowMatch![1]).toContain('38 85% 55%')
+    })
+
+    it('tailwind.config.ts defines shadow-brand-owned-glow Tailwind utility', () => {
+      // AC #3: Tailwind utility class must be available for components to consume
+      const config = readTailwindConfig()
+      expect(config).toContain('brand-owned-glow')
+      expect(config).toContain('--glow-owned')
+    })
+  })
+
   describe('1.2-U-05: Framer Motion importable without build errors', () => {
     it('framer-motion is listed in package.json dependencies', () => {
       // TODO: implement after npm install runs
