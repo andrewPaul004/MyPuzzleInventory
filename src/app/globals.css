@@ -49,7 +49,7 @@
 .dark {
   /* shadcn/ui dark base tokens */
   --background: 24 8% 8%;            /* Void Walnut */
-  --foreground: 0 0% 94%;            /* #F0EDE8 equivalent as HSL */
+  --foreground: 38 21% 93%;          /* #F0EDE8 warm off-white — never pure white */
   --card: 24 7% 11%;
   --card-foreground: 0 0% 94%;
   --popover: 24 7% 11%;

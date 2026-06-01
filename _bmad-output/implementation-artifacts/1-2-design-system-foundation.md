@@ -1,6 +1,6 @@
 # Story 1.2: Design System Foundation
 
-Status: review
+Status: done
 
 ## Story
 
@@ -519,6 +519,16 @@ migrations/
 - Project Context: `cn()` from `src/lib/utils.ts`, no hardcoded colours, `tailwind.config.ts` not `.js` (`_bmad-output/project-context.md`)
 - Epic 1 Test Plan: Story 1.2 test IDs 1.2-U-01 through 1.2-C-03 (`_bmad-output/implementation-artifacts/test-plans/epic-1-test-plan.md`)
 - Story 1.1 completion notes: `src/components/ui/index.ts` exists (empty barrel), `cn()` in `src/lib/utils.ts`, `NuqsAdapter` in layout — all must be preserved (`_bmad-output/implementation-artifacts/1-1-project-scaffold-and-auth-infrastructure.md`)
+
+### Review Findings
+
+_Code review 2026-06-01 — 2 patches applied, 3 dismissed as noise._
+
+- [x] [Review][Patch] Dark `--foreground` is cold near-white, not warm `#F0EDE8` [src/app/globals.css:52] — `.dark { --foreground: 0 0% 94% }` is `hsl(0 0% 94%)` (zero saturation = cold grey). Spec AC #5 and Dev Notes line 251 require body/foreground text to be `#F0EDE8` = `hsl(38 21% 93%)` (warm off-white), never pure-white-adjacent. The `.dark body { color: #F0EDE8 }` rule only fixes the `body` element; every child consuming `text-foreground` / `card-foreground` resolved to the cold grey. Fixed by setting the dark `--foreground` token to `38 21% 93%` so all `text-foreground` consumers inherit the warm off-white.
+- [x] [Review][Patch] shadcn `button.tsx` uses `shadow-xs` which does not exist in Tailwind v3.4.17 [src/components/ui/button.tsx:13,15,17,19] — default Tailwind v3 boxShadow scale has no `xs` key (smallest is `sm`), so the generated button rendered with no shadow. `button.tsx` is shadcn-generated and must not be hand-edited (AC #1), so the missing utility was registered at the config level (`tailwind.config.ts` boxShadow) to make the generated class resolve.
+- Dismissed: Fraunces `axes: ['SOFT','WONK','opsz']` vs spec `['opsz','wght','WONK']` — `next/font/google` rejects `wght` as a named variable-font axis; `wght` is applied via `font-variation-settings` in `.font-display` (documented Dev Notes line 531, asserted by tests). Justified, intentional deviation.
+- Dismissed: `enableSystem` on `ThemeProvider` — matches the canonical layout.tsx in Dev Notes (line 379); `defaultTheme="dark"` keeps dark primary. Not a deviation.
+- Dismissed: `* { @apply border-border }` universal selector — idiomatic shadcn `@layer base` baseline.
 
 ## Dev Agent Record
 

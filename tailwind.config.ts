@@ -57,6 +57,10 @@ const config: Config = {
       boxShadow: {
         // Owned state glow — AC #3
         'brand-owned-glow': 'var(--glow-owned)',
+        // shadcn-generated components (e.g. button.tsx) use the Tailwind v4 `shadow-xs`
+        // utility, which has no entry in the Tailwind v3 default scale. Register it at
+        // config level so the generated baseline resolves without hand-editing it (AC #1).
+        xs: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
       },
       fontFamily: {
         display: ['var(--font-fraunces)', 'Georgia', 'serif'],
