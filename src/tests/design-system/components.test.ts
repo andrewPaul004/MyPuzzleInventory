@@ -148,21 +148,14 @@ describe('Story 1.2 — Design System Component Tests', () => {
     })
 
     it('git shows no unstaged modifications to src/components/ui/ files', () => {
-      // TODO: implement after baseline commit is made per Task 2 of the story
       // The baseline commit must happen BEFORE any edits; this test asserts
       // that generated files remain unmodified after the baseline commit.
-      // Skip this test if git is not available in the test environment.
-      try {
-        const output = execSync(
-          'git diff --name-only HEAD -- src/components/ui/',
-          { cwd: PROJECT_ROOT, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }
-        )
-        // No modified files in components/ui/ means the output is empty
-        expect(output.trim()).toBe('')
-      } catch {
-        // If git diff fails (e.g., no baseline commit yet), skip gracefully
-        // This is acceptable during ATDD skeleton phase — passes once dev is done
-      }
+      const output = execSync(
+        'git diff --name-only HEAD -- src/components/ui/',
+        { cwd: PROJECT_ROOT, encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }
+      )
+      // No modified files in components/ui/ means the output is empty
+      expect(output.trim()).toBe('')
     })
 
     it('next-themes is listed in package.json dependencies', () => {

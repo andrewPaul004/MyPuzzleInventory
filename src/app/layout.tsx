@@ -36,7 +36,7 @@ export default function RootLayout({
       className={`${fraunces.variable} ${inter.variable}`}
     >
       <body>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="dark">
           <NuqsAdapter>{children}</NuqsAdapter>
         </ThemeProvider>
       </body>

@@ -36,7 +36,7 @@
   --glow-owned: 0 0 0 2px hsl(38 85% 55%), 0 0 12px 2px hsl(38 85% 55% / 0.35);
 
   /* Typography scale — major-third ratio (1.250), clamp() fluid */
-  --text-xs:      clamp(0.75rem, 0.7rem + 0.25vw, 0.75rem);
+  --text-xs:      clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
   --text-sm:      clamp(0.75rem, 0.75rem + 0.35vw, 0.875rem);
   --text-base:    clamp(0.875rem, 0.875rem + 0.4vw, 1rem);
   --text-lg:      clamp(1rem, 1rem + 0.5vw, 1.25rem);
@@ -51,9 +51,9 @@
   --background: 24 8% 8%;            /* Void Walnut */
   --foreground: 38 21% 93%;          /* #F0EDE8 warm off-white — never pure white */
   --card: 24 7% 11%;
-  --card-foreground: 0 0% 94%;
+  --card-foreground: 38 21% 93%;
   --popover: 24 7% 11%;
-  --popover-foreground: 0 0% 94%;
+  --popover-foreground: 38 21% 93%;
   --primary: 38 85% 55%;
   --primary-foreground: 24 8% 8%;
   --secondary: 210 70% 60%;
@@ -61,7 +61,7 @@
   --muted: 24 6% 15%;
   --muted-foreground: 24 5% 60%;
   --accent: 24 6% 18%;
-  --accent-foreground: 0 0% 94%;
+  --accent-foreground: 38 21% 93%;
   --destructive: 0 65% 55%;
   --destructive-foreground: 0 0% 100%;
   --border: 24 5% 20%;
@@ -82,8 +82,6 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-inter), system-ui, sans-serif;
-    color: hsl(var(--foreground));
-    background-color: hsl(var(--background));
   }
 }
 
